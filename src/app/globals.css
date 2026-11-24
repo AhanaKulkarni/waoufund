@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #F8FAFF;
-  --soft-blue: #E0EDFF;
-  --lavender: #EAE5FF;
-  --primary-blue: #5268E8;
-  --violet-accent: #8271ED;
-  --dark-text: #171C2F;
-  --secondary-text: #69748A;
-  --card-border: #E6EAF2;
+  --bg-primary: #FAFCFF;
+  --google-blue: #4285F4;
+  --google-red: #EA4335;
+  --google-yellow: #FBBC05;
+  --google-green: #34A853;
+  --dark-text: #1E2330;
+  --secondary-text: #5F6B82;
+  --border-subtle: #E8EDF5;
 }
 
 body {
@@ -19,80 +19,113 @@ body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
-/* Subtle gradient background inspired by Backrr */
-.backrr-hero-bg {
-  background: radial-gradient(circle at 50% 0%, rgba(224, 237, 255, 0.7) 0%, rgba(234, 229, 255, 0.4) 35%, rgba(248, 250, 255, 0) 70%),
-              radial-gradient(circle at 80% 20%, rgba(234, 229, 255, 0.3) 0%, rgba(248, 250, 255, 0) 50%);
+/* 
+ * Google-inspired subtle ambient mesh gradient
+ * Combines ultra-soft diffused Google blue, coral/red, yellow, and green tints
+ * over a crisp pristine white-blue canvas
+ */
+.google-subtle-mesh-bg {
+  background: 
+    radial-gradient(1100px circle at 50% -10%, rgba(66, 133, 244, 0.08) 0%, rgba(66, 133, 244, 0) 65%),
+    radial-gradient(850px circle at 15% 15%, rgba(234, 67, 53, 0.04) 0%, rgba(234, 67, 53, 0) 55%),
+    radial-gradient(900px circle at 85% 18%, rgba(52, 168, 83, 0.045) 0%, rgba(52, 168, 83, 0) 60%),
+    radial-gradient(700px circle at 60% 40%, rgba(251, 188, 5, 0.035) 0%, rgba(251, 188, 5, 0) 50%),
+    #FAFCFF;
 }
 
-.backrr-card {
-  background: #FFFFFF;
-  border: 1px solid #E6EAF2;
-  border-radius: 24px;
-  box-shadow: 0 4px 20px -2px rgba(82, 104, 232, 0.04), 0 2px 6px -1px rgba(23, 28, 47, 0.02);
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+.google-mesh-card {
+  background: rgba(255, 255, 255, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(232, 237, 245, 0.85);
+  border-radius: 20px;
+  box-shadow: 0 4px 20px -2px rgba(66, 133, 244, 0.04), 0 1px 3px 0 rgba(30, 35, 48, 0.02);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.backrr-card:hover {
-  border-color: #D3DBEE;
-  box-shadow: 0 12px 30px -4px rgba(82, 104, 232, 0.08);
+.google-mesh-card:hover {
+  border-color: rgba(66, 133, 244, 0.25);
+  box-shadow: 0 12px 32px -4px rgba(66, 133, 244, 0.08), 0 2px 6px 0 rgba(30, 35, 48, 0.03);
 }
 
-/* Pill tags */
-.pill-tag {
+/* Sleek Pill tags */
+.sleek-pill {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.35rem 0.85rem;
+  gap: 0.4rem;
+  padding: 0.3rem 0.8rem;
   border-radius: 9999px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  background: #EAE5FF;
-  color: #5268E8;
-  border: 1px solid rgba(130, 113, 237, 0.15);
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  background: rgba(255, 255, 255, 0.9);
+  color: #3B5998;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
 }
 
-/* Primary Button */
-.btn-primary {
-  background: #5268E8;
+/* Sleek Google-tinted primary button */
+.btn-sleek-primary {
+  background: #1E2330;
   color: #FFFFFF;
-  font-weight: 600;
-  padding: 0.85rem 1.6rem;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.7rem 1.4rem;
   border-radius: 9999px;
   transition: all 0.2s ease;
-  box-shadow: 0 4px 14px 0 rgba(82, 104, 232, 0.25);
+  box-shadow: 0 2px 8px rgba(30, 35, 48, 0.12);
 }
 
-.btn-primary:hover {
-  background: #4358d6;
+.btn-sleek-primary:hover {
+  background: #2D3748;
   transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(82, 104, 232, 0.35);
+  box-shadow: 0 4px 14px rgba(30, 35, 48, 0.18);
 }
 
-/* Secondary Button */
-.btn-secondary {
+/* Sleek secondary button */
+.btn-sleek-secondary {
   background: #FFFFFF;
-  color: #171C2F;
-  border: 1px solid #E6EAF2;
-  font-weight: 600;
-  padding: 0.85rem 1.6rem;
+  color: #1E2330;
+  border: 1px solid #E2E8F0;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.7rem 1.4rem;
   border-radius: 9999px;
   transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.btn-secondary:hover {
-  background: #F8FAFF;
+.btn-sleek-secondary:hover {
+  background: #F8FAFD;
   border-color: #CBD5E1;
   transform: translateY(-1px);
 }
 
-/* Waveform bar animation */
+/* Sleek Accent Button */
+.btn-sleek-accent {
+  background: linear-gradient(135deg, #4285F4 0%, #357AE8 100%);
+  color: #FFFFFF;
+  font-weight: 500;
+  font-size: 0.85rem;
+  padding: 0.7rem 1.4rem;
+  border-radius: 9999px;
+  transition: all 0.2s ease;
+  box-shadow: 0 3px 12px rgba(66, 133, 244, 0.25);
+}
+
+.btn-sleek-accent:hover {
+  background: linear-gradient(135deg, #357AE8 0%, #2A65CC 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(66, 133, 244, 0.35);
+}
+
+/* Audio Waveform animation */
 @keyframes pulseWave {
-  0%, 100% { height: 8px; }
-  50% { height: 28px; }
+  0%, 100% { height: 6px; }
+  50% { height: 22px; }
 }
 
 .waveform-bar {
