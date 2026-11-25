@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 :root {
-  --bg-primary: #FAFCFF;
-  --google-blue: #4285F4;
-  --google-red: #EA4335;
-  --google-yellow: #FBBC05;
-  --google-green: #34A853;
-  --dark-text: #1E2330;
-  --secondary-text: #5F6B82;
-  --border-subtle: #E8EDF5;
+  --bg-primary: #FAFBFF;
+  --soft-blue: #DDEBFF;
+  --lavender: #E8DEFF;
+  --primary-blue: #5368EA;
+  --violet: #8069EA;
+  --dark-text: #171A2E;
+  --secondary-text: #68738A;
+  --border-subtle: #E9EAF2;
 }
 
 body {
@@ -23,111 +23,49 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* 
- * Google-inspired subtle ambient mesh gradient
- * Combines ultra-soft diffused Google blue, coral/red, yellow, and green tints
- * over a crisp pristine white-blue canvas
- */
-.google-subtle-mesh-bg {
-  background: 
-    radial-gradient(1100px circle at 50% -10%, rgba(66, 133, 244, 0.08) 0%, rgba(66, 133, 244, 0) 65%),
-    radial-gradient(850px circle at 15% 15%, rgba(234, 67, 53, 0.04) 0%, rgba(234, 67, 53, 0) 55%),
-    radial-gradient(900px circle at 85% 18%, rgba(52, 168, 83, 0.045) 0%, rgba(52, 168, 83, 0) 60%),
-    radial-gradient(700px circle at 60% 40%, rgba(251, 188, 5, 0.035) 0%, rgba(251, 188, 5, 0) 50%),
-    #FAFCFF;
+/* Backrr-inspired subtle horizontal blue-to-lavender hero gradient */
+.backrr-hero-gradient {
+  background: linear-gradient(
+    115deg,
+    rgba(221, 235, 255, 0.72) 0%,
+    rgba(250, 251, 255, 0.92) 48%,
+    rgba(232, 222, 255, 0.72) 100%
+  );
 }
 
-.google-mesh-card {
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(16px);
-  border: 1px solid rgba(232, 237, 245, 0.85);
-  border-radius: 20px;
-  box-shadow: 0 4px 20px -2px rgba(66, 133, 244, 0.04), 0 1px 3px 0 rgba(30, 35, 48, 0.02);
-  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-.google-mesh-card:hover {
-  border-color: rgba(66, 133, 244, 0.25);
-  box-shadow: 0 12px 32px -4px rgba(66, 133, 244, 0.08), 0 2px 6px 0 rgba(30, 35, 48, 0.03);
-}
-
-/* Sleek Pill tags */
-.sleek-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.8rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 500;
-  letter-spacing: 0.01em;
-  background: rgba(255, 255, 255, 0.9);
-  color: #3B5998;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
-}
-
-/* Sleek Google-tinted primary button */
-.btn-sleek-primary {
-  background: #1E2330;
+/* Primary blue-to-lavender gradient button */
+.btn-waou-gradient {
+  background: linear-gradient(135deg, #5368EA 0%, #8069EA 100%);
   color: #FFFFFF;
   font-weight: 500;
-  font-size: 0.85rem;
-  padding: 0.7rem 1.4rem;
   border-radius: 9999px;
   transition: all 0.2s ease;
-  box-shadow: 0 2px 8px rgba(30, 35, 48, 0.12);
+  box-shadow: 0 4px 14px rgba(83, 104, 234, 0.22);
 }
 
-.btn-sleek-primary:hover {
-  background: #2D3748;
+.btn-waou-gradient:hover {
+  opacity: 0.95;
   transform: translateY(-1px);
-  box-shadow: 0 4px 14px rgba(30, 35, 48, 0.18);
+  box-shadow: 0 6px 20px rgba(83, 104, 234, 0.3);
 }
 
-/* Sleek secondary button */
-.btn-sleek-secondary {
+.btn-waou-outline {
   background: #FFFFFF;
-  color: #1E2330;
-  border: 1px solid #E2E8F0;
+  color: #171A2E;
+  border: 1px solid #E9EAF2;
   font-weight: 500;
-  font-size: 0.85rem;
-  padding: 0.7rem 1.4rem;
   border-radius: 9999px;
   transition: all 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
 }
 
-.btn-sleek-secondary:hover {
-  background: #F8FAFD;
+.btn-waou-outline:hover {
   border-color: #CBD5E1;
-  transform: translateY(-1px);
+  background: #FAFBFF;
 }
 
-/* Sleek Accent Button */
-.btn-sleek-accent {
-  background: linear-gradient(135deg, #4285F4 0%, #357AE8 100%);
-  color: #FFFFFF;
-  font-weight: 500;
-  font-size: 0.85rem;
-  padding: 0.7rem 1.4rem;
-  border-radius: 9999px;
-  transition: all 0.2s ease;
-  box-shadow: 0 3px 12px rgba(66, 133, 244, 0.25);
-}
-
-.btn-sleek-accent:hover {
-  background: linear-gradient(135deg, #357AE8 0%, #2A65CC 100%);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 18px rgba(66, 133, 244, 0.35);
-}
-
-/* Audio Waveform animation */
-@keyframes pulseWave {
-  0%, 100% { height: 6px; }
-  50% { height: 22px; }
-}
-
-.waveform-bar {
-  animation: pulseWave 1.2s ease-in-out infinite;
+.waou-card {
+  background: #FFFFFF;
+  border: 1px solid #E9EAF2;
+  border-radius: 20px;
+  box-shadow: 0 4px 20px -4px rgba(23, 26, 46, 0.04);
 }
