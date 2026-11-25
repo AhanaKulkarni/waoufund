@@ -76,8 +76,18 @@ export default function HomePage() {
       <div className="hero-google-ambient border-b border-[#E9EAF2]">
         <Navbar />
 
-        <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-16 pb-24 sm:pt-24 sm:pb-32 text-center">
-          <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-semibold text-[#171A2E] tracking-[-0.03em] leading-[1.12] mb-6">
+        <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-14 pb-24 sm:pt-20 sm:pb-32 text-center relative z-10">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#E9EAF2] shadow-xs text-xs font-medium text-[#171A2E] mb-7">
+            <span className="flex items-center gap-1" aria-hidden="true">
+              <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#EA4335]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#FBBC05]" />
+              <span className="w-1.5 h-1.5 rounded-full bg-[#34A853]" />
+            </span>
+            <span className="text-[#68738A]">AI-Powered Fundraising Intelligence</span>
+          </div>
+
+          <h1 className="text-4xl sm:text-5xl md:text-[3.75rem] font-semibold text-[#171A2E] tracking-[-0.03em] leading-[1.1] mb-6">
             Raise Faster. Meet the{' '}
             <span className="bg-gradient-to-r from-[#5368EA] to-[#8069EA] bg-clip-text text-transparent">
               Right Investors.
@@ -89,19 +99,25 @@ export default function HomePage() {
             stress-test financials, and navigate due diligence — powered by institutional AI.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 flex-wrap">
             <Link
               href="/auth/startup/register"
-              className="w-full sm:w-auto btn-waou-gradient px-8 py-3.5 text-sm inline-flex items-center justify-center gap-2"
+              className="w-full sm:w-auto btn-waou-gradient px-7 py-3.5 text-sm inline-flex items-center justify-center gap-2"
             >
-              <span>Get Started</span>
+              <span>Register as Startup</span>
               <ArrowRight className="w-4 h-4" />
+            </Link>
+            <Link
+              href="/auth/investor/register"
+              className="w-full sm:w-auto btn-waou-outline px-7 py-3.5 text-sm inline-flex items-center justify-center shadow-xs"
+            >
+              Register as Investor
             </Link>
             <a
               href="#waitlist"
-              className="w-full sm:w-auto btn-waou-outline px-7 py-3.5 text-sm inline-flex items-center justify-center"
+              className="w-full sm:w-auto px-6 py-3.5 rounded-full text-sm font-medium text-[#68738A] hover:text-[#171A2E] bg-white/70 hover:bg-white border border-[#E9EAF2]/80 transition-all inline-flex items-center justify-center"
             >
-              Join Waitlist
+              Join the Waitlist
             </a>
           </div>
         </section>
