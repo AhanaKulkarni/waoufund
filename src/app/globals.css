@@ -23,7 +23,7 @@ body {
   text-rendering: optimizeLegibility;
 }
 
-/* Backrr-inspired subtle horizontal blue-to-lavender hero gradient */
+/* Backrr-inspired subtle horizontal blue-to-lavender gradient (used for closing CTA) */
 .backrr-hero-gradient {
   background: linear-gradient(
     115deg,
@@ -31,6 +31,39 @@ body {
     rgba(250, 251, 255, 0.92) 48%,
     rgba(232, 222, 255, 0.72) 100%
   );
+}
+
+/* Hero Section: Predominantly white canvas with ultra-subtle four-colour Google ambient light */
+.hero-google-ambient {
+  position: relative;
+  background-color: #FFFFFF;
+  overflow: hidden;
+}
+
+.hero-google-ambient::before {
+  content: '';
+  position: absolute;
+  inset: -12%;
+  z-index: 0;
+  pointer-events: none;
+  background:
+    /* Central white breathing room to keep text area crisp & predominantly white */
+    radial-gradient(ellipse 52% 48% at 50% 48%, rgba(255, 255, 255, 0.92) 0%, rgba(255, 255, 255, 0) 75%),
+    /* Google Blue (#4285F4) — soft ambient diffusion from upper-left */
+    radial-gradient(ellipse 48% 46% at 14% 22%, rgba(66, 133, 244, 0.10) 0%, rgba(66, 133, 244, 0) 70%),
+    /* Google Red (#EA4335) — faint warm ambient glow toward upper-right */
+    radial-gradient(ellipse 44% 42% at 86% 24%, rgba(234, 67, 53, 0.065) 0%, rgba(234, 67, 53, 0) 70%),
+    /* Google Yellow (#FBBC05) — subtle warm highlight toward lower-left */
+    radial-gradient(ellipse 42% 40% at 24% 84%, rgba(251, 188, 5, 0.065) 0%, rgba(251, 188, 5, 0) 70%),
+    /* Google Green (#34A853) — natural soft blend toward lower-right */
+    radial-gradient(ellipse 46% 44% at 80% 80%, rgba(52, 168, 83, 0.07) 0%, rgba(52, 168, 83, 0) 70%);
+  filter: blur(56px);
+  transform: translateZ(0);
+}
+
+.hero-google-ambient > * {
+  position: relative;
+  z-index: 1;
 }
 
 /* Primary blue-to-lavender gradient button */

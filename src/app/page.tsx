@@ -72,8 +72,8 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFBFF] text-[#171A2E]">
-      {/* 1. HERO + HEADER WITH BACKRR-INSPIRED SUBTLE BLUE-TO-LAVENDER GRADIENT */}
-      <div className="backrr-hero-gradient border-b border-[#E9EAF2]">
+      {/* 1. HERO + HEADER WITH FOUR-COLOUR GOOGLE AMBIENT GRADIENT OVER WHITE CANVAS */}
+      <div className="hero-google-ambient border-b border-[#E9EAF2]">
         <Navbar />
 
         <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-16 pb-24 sm:pt-24 sm:pb-32 text-center">
