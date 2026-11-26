@@ -41,15 +41,15 @@ export default function Navbar() {
 
   return (
     <header ref={navRef} className="w-full bg-transparent relative z-50">
-      <div className="max-w-6xl mx-auto px-6 sm:px-8 h-20 flex items-center justify-between">
-        {/* LEFT: Attached WaoU Fund Logo ONLY */}
+      <div className="w-full pl-3 pr-5 sm:pl-5 sm:pr-8 h-20 flex items-center justify-between">
+        {/* EXTREME LEFT: Transparent WaoU Fund Logo */}
         <Link href="/" className="flex items-center group">
           <Image
             src="/waou-logo.png"
             alt="WaoU Fund — AI Fundraising Intelligence"
             width={180}
-            height={58}
-            className="h-11 sm:h-12 w-auto object-contain transition-transform group-hover:scale-[1.02]"
+            height={57}
+            className="h-10 sm:h-11 w-auto object-contain transition-transform group-hover:scale-[1.02]"
             priority
           />
         </Link>
