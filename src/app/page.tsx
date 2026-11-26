@@ -1,372 +1,192 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import {
-  ArrowRight,
-  CheckCircle2,
-  AlertCircle,
-  Loader2,
-  FileText,
-  Calculator,
-  FolderLock,
-  HelpCircle,
-} from 'lucide-react';
+import { ArrowRight, Calendar, Users } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 
 export default function HomePage() {
-  // Waitlist form state
-  const [waitlistName, setWaitlistName] = useState('');
-  const [waitlistEmail, setWaitlistEmail] = useState('');
-  const [waitlistType, setWaitlistType] = useState<'Startup' | 'Investor' | 'Solopreneur'>('Startup');
-  const [waitlistLoading, setWaitlistLoading] = useState(false);
-  const [waitlistError, setWaitlistError] = useState<string | null>(null);
-  const [waitlistSuccess, setWaitlistSuccess] = useState<string | null>(null);
-
-  // Legal modal state
-  const [legalModal, setLegalModal] = useState<'privacy' | 'terms' | null>(null);
-
-  const handleWaitlistSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setWaitlistError(null);
-    setWaitlistSuccess(null);
-
-    if (!waitlistName.trim() || waitlistName.trim().length < 2) {
-      setWaitlistError('Please enter your full name.');
-      return;
-    }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!waitlistEmail.trim() || !emailRegex.test(waitlistEmail.trim())) {
-      setWaitlistError('Please enter a valid email address.');
-      return;
-    }
-
-    setWaitlistLoading(true);
-    try {
-      const res = await fetch('/api/waitlist', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: waitlistName.trim(),
-          email: waitlistEmail.trim(),
-          accountType: waitlistType,
-        }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Unable to join waitlist.');
-      }
-
-      setWaitlistSuccess(data.message || 'You have been added to the WaoU Fund waitlist.');
-      setWaitlistName('');
-      setWaitlistEmail('');
-    } catch (err: unknown) {
-      setWaitlistError(err instanceof Error ? err.message : 'Something went wrong.');
-    } finally {
-      setWaitlistLoading(false);
-    }
-  };
-
   return (
     <div className="min-h-screen flex flex-col bg-[#FAFBFF] text-[#171A2E]">
-      {/* 1. HERO + HEADER WITH FOUR-COLOUR GOOGLE AMBIENT GRADIENT OVER WHITE CANVAS */}
-      <div className="hero-google-ambient border-b border-[#E9EAF2]">
+      {/* HERO WITH FOUR-COLOUR GOOGLE AMBIENT GRADIENT */}
+      <div className="hero-google-ambient flex-1 flex flex-col justify-between">
         <Navbar />
 
-        <section className="max-w-4xl mx-auto px-6 sm:px-8 pt-14 pb-24 sm:pt-20 sm:pb-32 text-center relative z-10">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/90 border border-[#E9EAF2] shadow-xs text-xs font-medium text-[#171A2E] mb-7">
-            <span className="flex items-center gap-1" aria-hidden="true">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[#EA4335]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[#FBBC05]" />
-              <span className="w-1.5 h-1.5 rounded-full bg-[#34A853]" />
-            </span>
-            <span className="text-[#68738A]">AI-Powered Fundraising Intelligence</span>
-          </div>
-
-          <h1 className="text-4xl sm:text-5xl md:text-[3.75rem] font-semibold text-[#171A2E] tracking-[-0.03em] leading-[1.1] mb-6">
-            Raise Faster. Meet the{' '}
-            <span className="bg-gradient-to-r from-[#5368EA] to-[#8069EA] bg-clip-text text-transparent">
-              Right Investors.
-            </span>
-          </h1>
-
-          <p className="text-base sm:text-lg text-[#68738A] max-w-2xl mx-auto leading-relaxed mb-10 font-normal">
-            WaoU Fund helps high-growth startups discover the right investors, diagnose pitch decks,
-            stress-test financials, and navigate due diligence — powered by institutional AI.
-          </p>
-
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 flex-wrap">
-            <Link
-              href="/auth/startup/register"
-              className="w-full sm:w-auto btn-waou-gradient px-7 py-3.5 text-sm inline-flex items-center justify-center gap-2"
-            >
-              <span>Register as Startup</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/auth/investor/register"
-              className="w-full sm:w-auto btn-waou-outline px-7 py-3.5 text-sm inline-flex items-center justify-center shadow-xs"
-            >
-              Register as Investor
-            </Link>
-            <a
-              href="#waitlist"
-              className="w-full sm:w-auto px-6 py-3.5 rounded-full text-sm font-medium text-[#68738A] hover:text-[#171A2E] bg-white/70 hover:bg-white border border-[#E9EAF2]/80 transition-all inline-flex items-center justify-center"
-            >
-              Join the Waitlist
-            </a>
-          </div>
-        </section>
-      </div>
-
-      {/* 2. SIMPLE PLATFORM EXPLANATION (PRESERVING EXISTING CONTENT, CLEAN BACKRR LAYOUT) */}
-      <section className="py-20 sm:py-28 max-w-5xl mx-auto px-6 sm:px-8 w-full">
-        <div className="text-center max-w-2xl mx-auto mb-14 space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-widest text-[#5368EA]">
-            For Founders, Solopreneurs &amp; Investors
-          </p>
-          <h2 className="text-2xl sm:text-3xl font-semibold text-[#171A2E] tracking-tight">
-            One workspace for fundraising preparation, financial planning, and diligence.
-          </h2>
-          <p className="text-sm sm:text-base text-[#68738A] leading-relaxed">
-            Whether you are building independently as a solopreneur or preparing for an institutional
-            seed round, WaoU Fund organizes every step before partner meetings.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="waou-card p-7 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#DDEBFF]/70 text-[#5368EA] flex items-center justify-center mb-3">
-              <FileText className="w-4 h-4" />
-            </div>
-            <h3 className="text-base font-semibold text-[#171A2E]">Pitch Deck Evaluation</h3>
-            <p className="text-sm text-[#68738A] leading-relaxed">
-              Multimodal slide geometry and narrative parser benchmarking slides against 10,000+
-              funded seed presentations, identifying narrative bloat and financial gaps.
-            </p>
-          </div>
-
-          <div className="waou-card p-7 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#E8DEFF]/70 text-[#8069EA] flex items-center justify-center mb-3">
-              <Calculator className="w-4 h-4" />
-            </div>
-            <h3 className="text-base font-semibold text-[#171A2E]">Financial Forecast</h3>
-            <p className="text-sm text-[#68738A] leading-relaxed">
-              Deterministic 5-year interconnected financial model (P&amp;L, Cash Flow, Debt Schedule,
-              Runway sensitivity) with structured exports and clear assumptions.
-            </p>
-          </div>
-
-          <div className="waou-card p-7 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#DDEBFF]/70 text-[#5368EA] flex items-center justify-center mb-3">
-              <FolderLock className="w-4 h-4" />
-            </div>
-            <h3 className="text-base font-semibold text-[#171A2E]">Due Diligence</h3>
-            <p className="text-sm text-[#68738A] leading-relaxed">
-              Stage-aware due diligence repository with cryptographic SHA-256 hash stamping and
-              automated diligence clearance before investors review your files.
-            </p>
-          </div>
-
-          <div className="waou-card p-7 space-y-2.5">
-            <div className="w-9 h-9 rounded-xl bg-[#E8DEFF]/70 text-[#8069EA] flex items-center justify-center mb-3">
-              <HelpCircle className="w-4 h-4" />
-            </div>
-            <h3 className="text-base font-semibold text-[#171A2E]">Investor FAQs &amp; Readiness</h3>
-            <p className="text-sm text-[#68738A] leading-relaxed">
-              Clear underwriting answers covering stage-aware VC expectations, data security,
-              financial model exports, and institutional diligence standards.
-            </p>
-          </div>
-        </div>
-      </section>
-
-      {/* 3. WAITLIST ENTRY POINT */}
-      <section id="waitlist" className="py-16 sm:py-20 border-y border-[#E9EAF2] bg-white">
-        <div className="max-w-xl mx-auto px-6 sm:px-8">
-          <div className="text-center mb-8 space-y-2">
-            <h2 className="text-2xl font-semibold text-[#171A2E] tracking-tight">
-              Join the WaoU Fund Waitlist
-            </h2>
-            <p className="text-sm text-[#68738A]">
-              Request priority access for upcoming cohorts and institutional investor introductions.
-            </p>
-          </div>
-
-          <form onSubmit={handleWaitlistSubmit} className="space-y-4">
-            {waitlistError && (
-              <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-                <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                <span>{waitlistError}</span>
-              </div>
-            )}
-
-            {waitlistSuccess && (
-              <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs flex items-center gap-2">
-                <CheckCircle2 className="w-4 h-4 flex-shrink-0 text-emerald-600" />
-                <span>{waitlistSuccess}</span>
-              </div>
-            )}
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-              <div>
-                <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
-                  Name
-                </label>
-                <input
-                  type="text"
-                  required
-                  value={waitlistName}
-                  onChange={(e) => setWaitlistName(e.target.value)}
-                  placeholder="Alex Harrison"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
-                />
+        <main className="max-w-6xl mx-auto px-6 sm:px-8 py-12 sm:py-20 relative z-10 w-full my-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-10 items-center">
+            {/* LEFT: ALL TEXT LEFT-ALIGNED */}
+            <div className="lg:col-span-7 text-left space-y-6">
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/95 border border-[#E9EAF2] shadow-xs text-xs font-medium text-[#68738A]">
+                <span className="flex items-center gap-1" aria-hidden="true">
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#4285F4]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#EA4335]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#FBBC05]" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#34A853]" />
+                </span>
+                <span>Powered by WaoU AI.</span>
               </div>
 
-              <div>
-                <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
-                  Email Address
-                </label>
-                <input
-                  type="email"
-                  required
-                  value={waitlistEmail}
-                  onChange={(e) => setWaitlistEmail(e.target.value)}
-                  placeholder="alex@company.com"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
-                />
+              <h1 className="text-4xl sm:text-5xl md:text-[3.5rem] font-semibold text-[#171A2E] tracking-[-0.03em] leading-[1.1]">
+                AI-Powered{' '}
+                <span className="bg-gradient-to-r from-[#5368EA] to-[#8069EA] bg-clip-text text-transparent block sm:inline">
+                  Fundraising Platform.
+                </span>
+              </h1>
+
+              <p className="text-base sm:text-xl text-[#68738A] max-w-xl leading-relaxed font-normal">
+                Startups / MSMEs &amp; Investors / Lenders.
+              </p>
+
+              {/* Primary Role Entry Actions */}
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-start gap-3 pt-1">
+                <Link
+                  href="/auth/startup/register"
+                  className="btn-waou-gradient px-6 py-3.5 text-sm inline-flex items-center justify-center gap-2"
+                >
+                  <span>Startups / MSMEs</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href="/auth/investor/register"
+                  className="btn-waou-outline px-6 py-3.5 text-sm inline-flex items-center justify-center shadow-xs"
+                >
+                  Investors / Lenders
+                </Link>
+                <Link
+                  href="/meetings"
+                  className="px-5 py-3.5 rounded-full text-sm font-medium text-[#171A2E] hover:text-[#5368EA] bg-white/90 hover:bg-white border border-[#E9EAF2] transition-all inline-flex items-center justify-center gap-2 shadow-xs"
+                >
+                  <Calendar className="w-4 h-4 text-[#5368EA]" />
+                  <span>Partner Investor Meetings</span>
+                </Link>
+              </div>
+
+              {/* Ecosystem Enablers Registration (Left-Aligned) */}
+              <div className="max-w-lg bg-white/90 backdrop-blur-xs rounded-2xl border border-[#E9EAF2] p-5 shadow-xs">
+                <div className="flex items-center justify-start gap-2 text-xs font-semibold uppercase tracking-wider text-[#68738A] mb-3">
+                  <Users className="w-3.5 h-3.5 text-[#5368EA]" />
+                  <span>Ecosystem Enablers</span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                  <Link
+                    href="/auth/consultant/register"
+                    className="px-4 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] hover:bg-white hover:border-[#5368EA]/40 text-xs font-medium text-[#171A2E] hover:text-[#5368EA] transition-all text-center"
+                  >
+                    Consultants
+                  </Link>
+                  <Link
+                    href="/auth/mentor/register"
+                    className="px-4 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] hover:bg-white hover:border-[#5368EA]/40 text-xs font-medium text-[#171A2E] hover:text-[#5368EA] transition-all text-center"
+                  >
+                    Mentors
+                  </Link>
+                  <Link
+                    href="/auth/incubator/register"
+                    className="px-4 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] hover:bg-white hover:border-[#5368EA]/40 text-xs font-medium text-[#171A2E] hover:text-[#5368EA] transition-all text-center"
+                  >
+                    Incubators
+                  </Link>
+                </div>
               </div>
             </div>
 
-            <div>
-              <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
-                Account Type
-              </label>
-              <select
-                value={waitlistType}
-                onChange={(e) =>
-                  setWaitlistType(e.target.value as 'Startup' | 'Investor' | 'Solopreneur')
-                }
-                className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+            {/* RIGHT: BRIGHT GRAPHICS OF THE GOOGLE COLOURS (#4285F4, #EA4335, #FBBC05, #34A853) */}
+            <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
+              <div className="w-full max-w-[440px] aspect-square relative rounded-3xl bg-white/90 border border-[#E9EAF2] shadow-lg shadow-[#171A2E]/5 p-6 flex items-center justify-center overflow-hidden">
+                <svg
+                  viewBox="0 0 400 400"
+                  className="w-full h-full"
+                  role="img"
+                  aria-label="Bright Google-colour geometric fundraising intelligence graphic"
+                >
+                  <defs>
+                    <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#4285F4" />
+                      <stop offset="100%" stopColor="#1A73E8" />
+                    </linearGradient>
+                    <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#FF5252" />
+                      <stop offset="100%" stopColor="#EA4335" />
+                    </linearGradient>
+                    <linearGradient id="gYellow" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#FFD54F" />
+                      <stop offset="100%" stopColor="#FBBC05" />
+                    </linearGradient>
+                    <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#4ADE80" />
+                      <stop offset="100%" stopColor="#34A853" />
+                    </linearGradient>
+                  </defs>
+
+                  {/* Soft background grid lines */}
+                  <g stroke="#E9EAF2" strokeWidth="1">
+                    <line x1="40" y1="100" x2="360" y2="100" />
+                    <line x1="40" y1="200" x2="360" y2="200" />
+                    <line x1="40" y1="300" x2="360" y2="300" />
+                    <line x1="100" y1="40" x2="100" y2="360" />
+                    <line x1="200" y1="40" x2="200" y2="360" />
+                    <line x1="300" y1="40" x2="300" y2="360" />
+                  </g>
+
+                  {/* Bright Google Blue Quadrant Orb */}
+                  <circle cx="135" cy="135" r="76" fill="url(#gBlue)" opacity="0.92" />
+                  {/* Bright Google Red Overlapping Arc / Circle */}
+                  <circle cx="265" cy="130" r="64" fill="url(#gRed)" opacity="0.9" />
+                  {/* Bright Google Yellow Rounded Prism */}
+                  <rect x="64" y="218" width="128" height="118" rx="34" fill="url(#gYellow)" opacity="0.94" />
+                  {/* Bright Google Green Ascending Pillar */}
+                  <rect x="212" y="182" width="124" height="154" rx="34" fill="url(#gGreen)" opacity="0.92" />
+
+                  {/* Crisp White Overlapping Ascending Growth Curve & Nodes */}
+                  <path
+                    d="M 75 295 C 125 275, 145 215, 200 198 C 250 182, 278 122, 330 92"
+                    fill="none"
+                    stroke="#FFFFFF"
+                    strokeWidth="6"
+                    strokeLinecap="round"
+                  />
+                  <circle cx="75" cy="295" r="9" fill="#FFFFFF" stroke="#FBBC05" strokeWidth="4" />
+                  <circle cx="200" cy="198" r="9" fill="#FFFFFF" stroke="#4285F4" strokeWidth="4" />
+                  <circle cx="265" cy="140" r="9" fill="#FFFFFF" stroke="#EA4335" strokeWidth="4" />
+                  <circle cx="330" cy="92" r="11" fill="#FFFFFF" stroke="#34A853" strokeWidth="4" />
+
+                  {/* Four-colour bright accent pills */}
+                  <rect x="242" y="248" width="66" height="14" rx="7" fill="#FFFFFF" opacity="0.9" />
+                  <rect x="242" y="272" width="46" height="14" rx="7" fill="#FFFFFF" opacity="0.7" />
+                  <rect x="92" y="250" width="72" height="14" rx="7" fill="#FFFFFF" opacity="0.9" />
+                  <rect x="92" y="274" width="48" height="14" rx="7" fill="#FFFFFF" opacity="0.7" />
+                </svg>
+              </div>
+            </div>
+          </div>
+        </main>
+
+        {/* MINIMAL FOOTER */}
+        <footer className="border-t border-[#E9EAF2]/80 bg-white/80 backdrop-blur-xs py-6 relative z-10">
+          <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#68738A]">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/waou-logo.png"
+                alt="WaoU Fund"
+                width={120}
+                height={38}
+                className="h-7 w-auto object-contain"
+              />
+              <span>• Powered by WaoU AI.</span>
+            </div>
+            <div className="flex items-center gap-5">
+              <a
+                href="mailto:support@waoufund.com"
+                className="text-[#5368EA] font-medium hover:underline"
               >
-                <option value="Startup">Startup</option>
-                <option value="Solopreneur">Solopreneur / Independent Founder</option>
-                <option value="Investor">Investor</option>
-              </select>
+                support@waoufund.com
+              </a>
+              <span>&copy; {new Date().getFullYear()} WaoU Fund</span>
             </div>
-
-            <button
-              type="submit"
-              disabled={waitlistLoading}
-              className="w-full btn-waou-gradient py-3 px-6 text-sm flex items-center justify-center gap-2 disabled:opacity-60"
-            >
-              {waitlistLoading ? (
-                <>
-                  <Loader2 className="w-4 h-4 animate-spin" />
-                  <span>Saving...</span>
-                </>
-              ) : (
-                <span>Join Priority Waitlist</span>
-              )}
-            </button>
-          </form>
-        </div>
-      </section>
-
-      {/* 4. CLOSING CTA SECTION (BACKRR-INSPIRED) */}
-      <section className="py-24 sm:py-28 backrr-hero-gradient">
-        <div className="max-w-3xl mx-auto px-6 sm:px-8 text-center space-y-6">
-          <h2 className="text-3xl sm:text-4xl font-semibold text-[#171A2E] tracking-tight">
-            Ready to prepare your next round?
-          </h2>
-          <p className="text-sm sm:text-base text-[#68738A] max-w-xl mx-auto leading-relaxed">
-            Create your WaoU Fund account to evaluate your pitch deck, build your financial
-            forecast, and organize your due diligence in one place.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3.5 pt-2">
-            <Link
-              href="/auth/startup/register"
-              className="w-full sm:w-auto btn-waou-gradient px-8 py-3.5 text-sm inline-flex items-center justify-center gap-2"
-            >
-              <span>Register as a Startup</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href="/auth/investor/register"
-              className="w-full sm:w-auto btn-waou-outline px-8 py-3.5 text-sm inline-flex items-center justify-center"
-            >
-              Register as an Investor
-            </Link>
           </div>
-        </div>
-      </section>
-
-      {/* 5. MINIMAL FOOTER */}
-      <footer className="mt-auto border-t border-[#E9EAF2] bg-white py-8">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#68738A]">
-          <div className="flex items-center gap-2.5">
-            <Image
-              src="/logo.png"
-              alt="WaoU Fund"
-              width={24}
-              height={24}
-              className="rounded-md border border-[#E9EAF2]"
-            />
-            <span className="font-semibold text-[#171A2E]">WaoU Fund</span>
-            <span>&copy; {new Date().getFullYear()} WaoU Fund Intelligence Inc.</span>
-          </div>
-
-          <div className="flex items-center gap-6">
-            <button
-              type="button"
-              onClick={() => setLegalModal('privacy')}
-              className="hover:text-[#171A2E] transition-colors"
-            >
-              Privacy Policy
-            </button>
-            <button
-              type="button"
-              onClick={() => setLegalModal('terms')}
-              className="hover:text-[#171A2E] transition-colors"
-            >
-              Terms of Use
-            </button>
-            <a
-              href="mailto:support@waoufund.com"
-              className="text-[#5368EA] font-medium hover:underline"
-            >
-              Contact Us
-            </a>
-          </div>
-        </div>
-      </footer>
-
-      {/* Privacy / Terms Modal */}
-      {legalModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#171A2E]/30 backdrop-blur-xs">
-          <div className="bg-white rounded-2xl border border-[#E9EAF2] max-w-md w-full p-6 space-y-4 shadow-xl">
-            <h3 className="text-lg font-semibold text-[#171A2E]">
-              {legalModal === 'privacy' ? 'Privacy Policy' : 'Terms of Use'}
-            </h3>
-            <p className="text-sm text-[#68738A] leading-relaxed">
-              {legalModal === 'privacy'
-                ? 'WaoU Fund stores your account details, pitch decks, and financial forecasts securely to provide fundraising preparation tools. Your confidential materials are never sold or used to train public models.'
-                : 'WaoU Fund provides AI-assisted pitch deck diagnostics, financial forecasting templates, and due diligence organization tools. All outputs and legal templates should be reviewed with qualified financial or legal counsel.'}
-            </p>
-            <button
-              type="button"
-              onClick={() => setLegalModal(null)}
-              className="w-full btn-waou-gradient py-2.5 text-xs"
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
+        </footer>
+      </div>
     </div>
   );
 }

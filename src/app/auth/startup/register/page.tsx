@@ -8,11 +8,18 @@ import AuthCardShell from '@/components/AuthCardShell';
 
 export default function StartupRegisterPage() {
   const router = useRouter();
+  // Personal Profile
   const [fullName, setFullName] = useState('');
+  const [linkedinProfile, setLinkedinProfile] = useState('');
+  const [mobileNumber, setMobileNumber] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [startupName, setStartupName] = useState('');
-  const [startupDetails, setStartupDetails] = useState('');
+  // Company Profile
+  const [companyDetails, setCompanyDetails] = useState('');
+  const [hasWebsite, setHasWebsite] = useState<boolean>(false);
+  const [websiteUrl, setWebsiteUrl] = useState('');
+  const [weeklyEmailConsent, setWeeklyEmailConsent] = useState<boolean>(false);
+
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,10 +35,14 @@ export default function StartupRegisterPage() {
         body: JSON.stringify({
           role: 'startup',
           fullName,
+          linkedinProfile,
+          mobileNumber,
           email,
           password,
-          startupName,
-          startupDetails,
+          companyDetails,
+          hasWebsite,
+          websiteUrl: hasWebsite ? websiteUrl : '',
+          weeklyEmailConsent,
         }),
       });
 
@@ -40,7 +51,8 @@ export default function StartupRegisterPage() {
         throw new Error(data.error || 'Registration failed.');
       }
 
-      router.push('/dashboard/startup');
+      // Automatically initiate pitch deck upload step immediately after account creation
+      router.push('/dashboard/startup?onboarding=upload');
       router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Unable to register.');
@@ -50,8 +62,8 @@ export default function StartupRegisterPage() {
 
   return (
     <AuthCardShell
-      heading="For Startups"
-      subheading="Create your startup account to evaluate your pitch deck, build financial forecasts, and prepare due diligence."
+      heading="Startups / MSMEs"
+      subheading="Create your account. Your pitch deck upload will start automatically next."
     >
       <form onSubmit={handleSubmit} className="space-y-4">
         {error && (
@@ -61,8 +73,13 @@ export default function StartupRegisterPage() {
           </div>
         )}
 
+        {/* PERSONAL PROFILE */}
+        <div className="text-[0.7rem] font-semibold uppercase tracking-wider text-[#68738A] pt-1">
+          Personal Profile
+        </div>
+
         <div>
-          <label className="block text-xs font-medium text-[#171A2E] mb-1.5">Full Name</label>
+          <label className="block text-xs font-medium text-[#171A2E] mb-1">Name</label>
           <input
             type="text"
             required
@@ -74,56 +91,127 @@ export default function StartupRegisterPage() {
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[#171A2E] mb-1.5">Email Address</label>
+          <label className="block text-xs font-medium text-[#171A2E] mb-1">LinkedIn Profile</label>
           <input
-            type="email"
+            type="url"
             required
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="alex@startup.com"
+            value={linkedinProfile}
+            onChange={(e) => setLinkedinProfile(e.target.value)}
+            placeholder="https://linkedin.com/in/yourprofile"
             className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
           />
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[#171A2E] mb-1.5">Password</label>
+          <label className="block text-xs font-medium text-[#171A2E] mb-1">Mobile Number</label>
           <input
-            type="password"
+            type="tel"
             required
-            minLength={6}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Minimum 6 characters"
+            value={mobileNumber}
+            onChange={(e) => setMobileNumber(e.target.value)}
+            placeholder="+91 98765 43210"
             className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
-            Startup / Business Name
-          </label>
-          <input
-            type="text"
-            required
-            value={startupName}
-            onChange={(e) => setStartupName(e.target.value)}
-            placeholder="e.g. AetherX Labs"
-            className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
-          />
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-[#171A2E] mb-1">Email Address</label>
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="alex@company.com"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-[#171A2E] mb-1">Password</label>
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Min 6 chars"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+            />
+          </div>
+        </div>
+
+        {/* COMPANY PROFILE */}
+        <div className="text-[0.7rem] font-semibold uppercase tracking-wider text-[#68738A] pt-2 border-t border-[#E9EAF2]">
+          Company Profile
         </div>
 
         <div>
-          <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
-            Basic Startup Details
-          </label>
+          <label className="block text-xs font-medium text-[#171A2E] mb-1">Company Details</label>
           <textarea
             rows={2}
-            value={startupDetails}
-            onChange={(e) => setStartupDetails(e.target.value)}
-            placeholder="Stage (e.g. Pre-Seed / Solopreneur) and one-line summary"
+            required
+            value={companyDetails}
+            onChange={(e) => setCompanyDetails(e.target.value)}
+            placeholder="Brief description of what your company builds (Company Name & Logo will be extracted from your pitch deck)"
             className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
           />
         </div>
+
+        <div>
+          <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
+            Does your company have a website?
+          </label>
+          <div className="flex gap-3">
+            <button
+              type="button"
+              onClick={() => setHasWebsite(true)}
+              className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
+                hasWebsite
+                  ? 'border-[#5368EA] bg-[#DDEBFF]/50 text-[#5368EA]'
+                  : 'border-[#E9EAF2] bg-[#FAFBFF] text-[#68738A]'
+              }`}
+            >
+              Yes
+            </button>
+            <button
+              type="button"
+              onClick={() => setHasWebsite(false)}
+              className={`flex-1 py-2 rounded-xl border text-xs font-medium transition-colors ${
+                !hasWebsite
+                  ? 'border-[#5368EA] bg-[#DDEBFF]/50 text-[#5368EA]'
+                  : 'border-[#E9EAF2] bg-[#FAFBFF] text-[#68738A]'
+              }`}
+            >
+              No
+            </button>
+          </div>
+        </div>
+
+        {hasWebsite && (
+          <div>
+            <label className="block text-xs font-medium text-[#171A2E] mb-1">Website URL</label>
+            <input
+              type="url"
+              required
+              value={websiteUrl}
+              onChange={(e) => setWebsiteUrl(e.target.value)}
+              placeholder="https://yourcompany.com"
+              className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+            />
+          </div>
+        )}
+
+        <label className="flex items-start gap-2.5 pt-1 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={weeklyEmailConsent}
+            onChange={(e) => setWeeklyEmailConsent(e.target.checked)}
+            className="mt-0.5 rounded border-[#E9EAF2] accent-[#5368EA]"
+          />
+          <span className="text-xs text-[#68738A] leading-relaxed">
+            I consent to receive weekly fundraising readiness updates and communication via email.
+          </span>
+        </label>
 
         <button
           type="submit"
@@ -133,20 +221,20 @@ export default function StartupRegisterPage() {
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Creating Startup Account...</span>
+              <span>Creating Account...</span>
             </>
           ) : (
             <>
-              <span>Create Startup Account</span>
+              <span>Continue to Pitch Deck Upload</span>
               <ArrowRight className="w-4 h-4" />
             </>
           )}
         </button>
 
-        <p className="text-center text-xs text-[#68738A] pt-3">
-          Already have a startup account?{' '}
+        <p className="text-center text-xs text-[#68738A] pt-2">
+          Already registered?{' '}
           <Link href="/auth/startup/login" className="text-[#5368EA] font-medium hover:underline">
-            Login as a Startup
+            Login as Startup / MSME
           </Link>
         </p>
       </form>

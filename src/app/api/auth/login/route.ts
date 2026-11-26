@@ -1,6 +1,14 @@
 import { NextResponse } from 'next/server';
-import { readDb } from '@/lib/store';
+import { readDb, UserRole } from '@/lib/store';
 import { verifyPassword, signSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth';
+
+const ROLE_LABELS: Record<UserRole, string> = {
+  startup: 'Startups / MSMEs',
+  investor: 'Investors / Lenders',
+  consultant: 'Consultants',
+  mentor: 'Mentors',
+  incubator: 'Incubators',
+};
 
 export async function POST(request: Request) {
   try {
@@ -28,9 +36,7 @@ export async function POST(request: Request) {
     if (expectedRole && user.role !== expectedRole) {
       return NextResponse.json(
         {
-          error: `This email is registered as a ${
-            user.role === 'startup' ? 'Startup' : 'Investor'
-          }. Please use the ${user.role === 'startup' ? 'For Startups' : 'For Investors'} login page.`,
+          error: `This email is registered under ${ROLE_LABELS[user.role]}. Please use the matching login page.`,
         },
         { status: 403 }
       );

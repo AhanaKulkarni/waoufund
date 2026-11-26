@@ -15,15 +15,15 @@ export default function AuthCardShell({ heading, subheading, children }: AuthCar
     <div className="min-h-screen bg-[#FAFBFF] flex flex-col justify-between px-4 py-10 sm:py-14">
       <div className="w-full max-w-md mx-auto my-auto">
         <div className="bg-white rounded-3xl border border-[#E9EAF2] p-7 sm:p-10 shadow-sm">
-          {/* Small WaoU logo at the top */}
+          {/* Attached WaoU logo at the top */}
           <div className="flex flex-col items-center text-center mb-8">
-            <Link href="/" className="mb-4 inline-flex items-center gap-2">
+            <Link href="/" className="mb-4 inline-flex items-center">
               <Image
-                src="/logo.png"
-                alt="WaoU Fund Logo"
-                width={38}
-                height={38}
-                className="rounded-xl border border-[#E9EAF2]"
+                src="/waou-logo.png"
+                alt="WaoU Fund — AI Fundraising Intelligence"
+                width={170}
+                height={55}
+                className="h-11 w-auto object-contain"
                 priority
               />
             </Link>

@@ -1,7 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 
-export type UserRole = 'startup' | 'investor';
+export type UserRole = 'startup' | 'investor' | 'consultant' | 'mentor' | 'incubator';
 
 export interface UserRecord {
   id: string;
@@ -9,65 +9,108 @@ export interface UserRecord {
   fullName: string;
   email: string;
   passwordHash: string;
-  // Startup fields
-  startupName?: string;
-  startupDetails?: string;
-  // Investor fields
+  // Startup / MSME fields
+  linkedinProfile?: string;
+  mobileNumber?: string;
+  companyDetails?: string;
+  hasWebsite?: boolean;
+  websiteUrl?: string;
+  weeklyEmailConsent?: boolean;
+  companyName?: string;
+  companyLogoUrl?: string;
+  stage?: string;
+  // Investor / Lender fields
   firmName?: string;
   firmDetails?: string;
   portfolio?: string;
+  // Ecosystem Enabler fields (Consultant, Mentor, Incubator)
+  organizationName?: string;
+  expertiseDetails?: string;
   createdAt: string;
 }
 
-export interface WaitlistRecord {
+export interface FrsArea {
+  id: string;
+  name: string;
+  score: number;
+  maxScore: number;
+  status: 'complete' | 'issue';
+  missingInfo: string;
+  suggestedImprovement: string;
+  generatedContent: string;
+  approvedContent?: string;
+}
+
+export interface FrsState {
+  fileName?: string;
+  extractedCompanyName?: string;
+  overallScore: number;
+  errorCount: number;
+  areas: FrsArea[];
+  updatedAt: string;
+}
+
+export interface TeamAdvisorMember {
+  id: string;
+  name: string;
+  linkedinProfile: string;
+  role: string;
+  email: string;
+  invited: boolean;
+  inviteStatus?: string;
+  invitedAt?: string;
+}
+
+export interface CompetitorItem {
+  name: string;
+  url: string;
+  offeringSummary: string;
+  positioning: string;
+}
+
+export interface StrategyWorkflowState {
+  gtmStrategy: string;
+  revenueModel: string;
+  stageSlides: string;
+  teamAdvisors: TeamAdvisorMember[];
+  hasLogo: boolean | null;
+  closingLogoUrl?: string;
+  competitors: CompetitorItem[];
+  improvedSolutionSlide?: string;
+  changeUspMoat: boolean | null;
+  uspMoatContent?: string;
+  generatedSlides: {
+    competitorAnalysis?: string;
+    tamSamSom?: string;
+    businessModelUnitEconomics?: string;
+  };
+  updatedAt: string;
+}
+
+export interface PartnerMeetingRequest {
   id: string;
   name: string;
   email: string;
-  accountType: 'Startup' | 'Investor' | 'Solopreneur';
+  roleType: string;
+  preferredDate: string;
+  notes: string;
   createdAt: string;
-}
-
-export interface DeckEvaluationRecord {
-  id: string;
-  userId: string;
-  fileName: string;
-  fileSizeBytes: number;
-  estimatedSlides: number;
-  overallScore: number;
-  aiPowered: boolean;
-  summary: string;
-  presentSections: string[];
-  missingInformation: string[];
-  weakSlides: Array<{ slide: string; issue: string; fix: string }>;
-  financialNarrativeGaps: string[];
-  recommendations: string[];
-  createdAt: string;
-}
-
-export interface DueDiligenceItem {
-  id: string;
-  title: string;
-  category: string;
-  completed: boolean;
-  hash?: string;
-  updatedAt: string;
 }
 
 interface DatabaseSchema {
   users: UserRecord[];
-  waitlist: WaitlistRecord[];
-  deckEvaluations: DeckEvaluationRecord[];
-  dueDiligenceByUser: Record<string, DueDiligenceItem[]>;
+  frsByUser: Record<string, FrsState>;
+  strategyByUser: Record<string, StrategyWorkflowState>;
+  partnerMeetings: PartnerMeetingRequest[];
 }
 
 const DEFAULT_DB: DatabaseSchema = {
   users: [],
-  waitlist: [],
-  deckEvaluations: [],
-  dueDiligenceByUser: {},
+  frsByUser: {},
+  strategyByUser: {},
+  partnerMeetings: [],
 };
 
-// In-memory cache for serverless environments where disk is read-only
 let memoryDb: DatabaseSchema | null = null;
 
 function getDbPath(): string {
@@ -75,9 +118,7 @@ function getDbPath(): string {
 }
 
 export function readDb(): DatabaseSchema {
-  if (memoryDb) {
-    return memoryDb;
-  }
+  if (memoryDb) return memoryDb;
   try {
     const dbPath = getDbPath();
     if (fs.existsSync(dbPath)) {
@@ -85,9 +126,9 @@ export function readDb(): DatabaseSchema {
       const parsed = JSON.parse(raw) as Partial<DatabaseSchema>;
       memoryDb = {
         users: parsed.users || [],
-        waitlist: parsed.waitlist || [],
-        deckEvaluations: parsed.deckEvaluations || [],
-        dueDiligenceByUser: parsed.dueDiligenceByUser || {},
+        frsByUser: parsed.frsByUser || {},
+        strategyByUser: parsed.strategyByUser || {},
+        partnerMeetings: parsed.partnerMeetings || [],
       };
       return memoryDb;
     }
@@ -108,54 +149,20 @@ export function writeDb(db: DatabaseSchema): void {
     }
     fs.writeFileSync(dbPath, JSON.stringify(db, null, 2), 'utf8');
   } catch {
-    // Read-only filesystem in serverless environments is handled gracefully via memoryDb
+    // Read-only filesystem in serverless environments
   }
 }
 
-export function getDefaultDueDiligenceChecklist(): DueDiligenceItem[] {
-  const now = new Date().toISOString();
-  return [
-    {
-      id: 'inc-docs',
-      title: 'Certificate of Incorporation & Bylaws',
-      category: 'Corporate',
-      completed: false,
-      updatedAt: now,
-    },
-    {
-      id: 'cap-table',
-      title: 'Fully Diluted Cap Table',
-      category: 'Equity',
-      completed: false,
-      updatedAt: now,
-    },
-    {
-      id: 'fin-model',
-      title: '5-Year Financial Forecast & Assumptions',
-      category: 'Financials',
-      completed: false,
-      updatedAt: now,
-    },
-    {
-      id: 'ip-assign',
-      title: 'Founder IP Assignment & Vesting Agreements',
-      category: 'Legal & IP',
-      completed: false,
-      updatedAt: now,
-    },
-    {
-      id: 'bank-stmts',
-      title: 'Past 3 Months Bank Statements & Burn Summary',
-      category: 'Financials',
-      completed: false,
-      updatedAt: now,
-    },
-    {
-      id: 'cust-cohorts',
-      title: 'Customer Retention Cohorts & Key Contracts',
-      category: 'Traction',
-      completed: false,
-      updatedAt: now,
-    },
-  ];
+export function getDefaultStrategyState(): StrategyWorkflowState {
+  return {
+    gtmStrategy: '',
+    revenueModel: '',
+    stageSlides: '',
+    teamAdvisors: [],
+    hasLogo: null,
+    competitors: [],
+    changeUspMoat: null,
+    generatedSlides: {},
+    updatedAt: new Date().toISOString(),
+  };
 }

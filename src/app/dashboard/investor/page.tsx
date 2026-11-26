@@ -103,17 +103,14 @@ export default function InvestorDashboardPage() {
       {/* Compact Header */}
       <header className="bg-white border-b border-[#E9EAF2] px-6 sm:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href="/" className="flex items-center">
             <Image
-              src="/logo.png"
+              src="/waou-logo.png"
               alt="WaoU Fund"
-              width={30}
-              height={30}
-              className="rounded-lg border border-[#E9EAF2]"
+              width={140}
+              height={45}
+              className="h-9 w-auto object-contain"
             />
-            <span className="font-semibold text-base tracking-tight text-[#171A2E]">
-              WaoU Fund
-            </span>
           </Link>
           <span className="hidden sm:inline-block text-[#E9EAF2]">|</span>
           <span className="hidden sm:inline-block text-xs font-medium text-[#5368EA]">

@@ -1,156 +1,153 @@
 import { NextResponse } from 'next/server';
-import crypto from 'crypto';
 import { getCurrentUser } from '@/lib/auth';
-import { readDb, writeDb, DeckEvaluationRecord } from '@/lib/store';
+import { readDb, writeDb, FrsArea, FrsState } from '@/lib/store';
 
 function extractTextFromPdfBuffer(buffer: Buffer): { text: string; estimatedPages: number } {
   const raw = buffer.toString('latin1');
-  // Estimate page count from PDF /Type /Page objects
   const pageMatches = raw.match(/\/Type\s*\/Page\b/g);
   const estimatedPages = pageMatches ? Math.max(1, pageMatches.length) : 1;
 
-  // Extract readable text tokens from PDF parenthesized strings and plain ASCII runs
   const parenStrings: string[] = [];
-  const parenRegex = /\(([^()\\]{3,120})\)/g;
+  const parenRegex = /\(([^()\\]{2,140})\)/g;
   let match: RegExpExecArray | null;
-  while ((match = parenRegex.exec(raw)) !== null && parenStrings.length < 1500) {
+  while ((match = parenRegex.exec(raw)) !== null && parenStrings.length < 1800) {
     const cleaned = match[1].replace(/[^\x20-\x7E]/g, ' ').trim();
-    if (cleaned.length >= 3 && /[a-zA-Z]{2,}/.test(cleaned)) {
+    if (cleaned.length >= 2 && /[a-zA-Z0-9]{2,}/.test(cleaned)) {
       parenStrings.push(cleaned);
     }
   }
 
   let extracted = parenStrings.join(' ');
   if (extracted.length < 80) {
-    // Fallback to readable ASCII runs (handles plain text / uncompressed PDFs)
-    const asciiRuns = raw.match(/[A-Za-z0-9 ,.%$₹:;\-/]{6,}/g) || [];
-    extracted = asciiRuns.slice(0, 800).join(' ');
+    const asciiRuns = raw.match(/[A-Za-z0-9 ,.%$₹:;\-/]{5,}/g) || [];
+    extracted = asciiRuns.slice(0, 900).join(' ');
   }
 
-  return { text: extracted.slice(0, 15000), estimatedPages };
+  return { text: extracted.slice(0, 18000), estimatedPages };
 }
 
-interface RubricCheck {
+function extractCompanyName(text: string, fileName: string): string {
+  const cleanFileBase = fileName
+    .replace(/\.pdf$/i, '')
+    .replace(/[-_]*(pitch|deck|seed|series[-_]?a|presentation|v\d+(\.\d+)?)/gi, '')
+    .replace(/[-_]+/g, ' ')
+    .trim();
+
+  const titleMatch = text.match(/(?:^|\s)([A-Z][A-Za-z0-9]{2,20}(?:\s+[A-Z][A-Za-z0-9]{2,15})?)\s+(?:Pitch Deck|Series|Seed|Inc\.|Labs|AI|Technologies)/);
+  if (titleMatch && titleMatch[1]) {
+    return titleMatch[1].trim();
+  }
+  return cleanFileBase.length >= 2 ? cleanFileBase : 'Venture Startup';
+}
+
+function buildBrandLogoDataUri(companyName: string): string {
+  const initials = companyName
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('') || 'WF';
+
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+    <defs>
+      <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#5368EA"/>
+        <stop offset="100%" stop-color="#8069EA"/>
+      </linearGradient>
+    </defs>
+    <rect width="96" height="96" rx="22" fill="url(#g)"/>
+    <text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#FFFFFF" font-family="Inter, Arial, sans-serif" font-size="34" font-weight="700">${initials}</text>
+  </svg>`;
+  return `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`;
+}
+
+interface FrsRubricSpec {
+  id: string;
   name: string;
+  maxScore: number;
   keywords: RegExp;
-  slideHint: string;
-  missingAction: string;
+  missingInfo: string;
+  suggestedImprovement: string;
+  generateContent: (company: string) => string;
 }
 
-const VC_RUBRIC: RubricCheck[] = [
+const FRS_RUBRIC: FrsRubricSpec[] = [
   {
+    id: 'problem',
     name: 'Problem & Pain Point',
-    keywords: /\b(problem|pain|challenge|inefficien|bottleneck|broken|costly)\b/i,
-    slideHint: 'Problem Slide',
-    missingAction: 'Define the specific customer pain point and quantify its financial or operational cost.',
+    maxScore: 15,
+    keywords: /\b(problem|pain|challenge|inefficien|bottleneck|broken|costly|friction)\b/i,
+    missingInfo: 'Clear problem statement quantifying customer pain and financial impact is missing or underspecified.',
+    suggestedImprovement: 'Define the target persona, frequency of the problem, and measurable cost of the status quo.',
+    generateContent: (company) =>
+      `${company} addresses a high-frequency operational bottleneck where target customers lose measurable time and margin using fragmented legacy workflows.`,
   },
   {
+    id: 'solution',
     name: 'Solution & Product',
-    keywords: /\b(solution|platform|product|workflow|architecture|engine|demo)\b/i,
-    slideHint: 'Solution Slide',
-    missingAction: 'Clarify how your product directly solves the stated problem with concrete workflow steps.',
+    maxScore: 15,
+    keywords: /\b(solution|platform|product|workflow|architecture|engine|automate|software)\b/i,
+    missingInfo: 'Concrete explanation of how the product resolves the core problem is incomplete.',
+    suggestedImprovement: 'Present a concise 3-step product workflow and highlight the primary customer outcome.',
+    generateContent: (company) =>
+      `${company} delivers an integrated platform that automates end-to-end execution, cutting manual turnaround time while preserving auditability.`,
   },
   {
-    name: 'Market Opportunity (TAM / SAM / SOM)',
+    id: 'usp',
+    name: 'USP & Moat',
+    maxScore: 15,
+    keywords: /\b(usp|moat|defensib|proprietary|unique|patent|switching cost|network effect)\b/i,
+    missingInfo: 'Unique Selling Proposition (USP) and long-term defensibility moat are not explicitly articulated.',
+    suggestedImprovement: 'Specify proprietary data advantages, workflow lock-in, or IP that prevents fast replication.',
+    generateContent: (company) =>
+      `${company}'s moat compounds via proprietary domain datasets, deep workflow integration, and high switching costs across customer teams.`,
+  },
+  {
+    id: 'competitors',
+    name: 'Competitor Analysis',
+    maxScore: 15,
+    keywords: /\b(competit|alternative|landscape|incumbent|versus|comparison|matrix)\b/i,
+    missingInfo: 'Structured comparison against direct and indirect competitors is missing.',
+    suggestedImprovement: 'Include a positioning matrix comparing at least 3–5 relevant competitors on price, capability, and speed.',
+    generateContent: (company) =>
+      `Unlike legacy point tools, ${company} unifies intelligence and execution in one workflow at a fraction of traditional onboarding overhead.`,
+  },
+  {
+    id: 'tam',
+    name: 'TAM / SAM / SOM',
+    maxScore: 15,
     keywords: /\b(tam|sam|som|market size|addressable|cagr|billion|opportunity)\b/i,
-    slideHint: 'Market Sizing Slide',
-    missingAction: 'Include both top-down and bottom-up TAM, SAM, and SOM calculations with cited sources.',
+    missingInfo: 'Bottom-up and top-down TAM / SAM / SOM market sizing figures were not detected.',
+    suggestedImprovement: 'Show Total Addressable Market, Serviceable Available Market, and a realistic 3-year SOM.',
+    generateContent: (company) =>
+      `${company} targets a multi-billion dollar global category (TAM), with a focused regional Serviceable Market (SAM) and disciplined 3-year capture (SOM).`,
   },
   {
-    name: 'Traction & Retention',
+    id: 'traction',
+    name: 'Traction / Retention',
+    maxScore: 10,
     keywords: /\b(traction|arr|mrr|revenue|growth|users|customers|retention|nrr|pilot|loi)\b/i,
-    slideHint: 'Traction Slide',
-    missingAction: 'Add verifiable traction metrics (MRR/ARR, MoM growth, cohort retention, or signed pilots).',
+    missingInfo: 'Early validation signals (pilots, LOIs, revenue, or retention metrics) are not clearly stated.',
+    suggestedImprovement: 'Highlight signed pilots, active users, or early customer retention proof points.',
+    generateContent: (company) =>
+      `Early customer cohorts demonstrate strong engagement and repeat workflow usage across initial pilot deployments.`,
   },
   {
+    id: 'business_model',
     name: 'Business Model & Unit Economics',
-    keywords: /\b(business model|pricing|cac|ltv|margin|payback|unit economics|subscription)\b/i,
-    slideHint: 'Unit Economics Slide',
-    missingAction: 'Detail pricing tiers, gross margin, CAC, LTV, and payback period assumptions.',
-  },
-  {
-    name: 'Competition & Defensibility',
-    keywords: /\b(competit|moat|defensib|advantage|differenti|ip|patent|landscape)\b/i,
-    slideHint: 'Competitive Landscape Slide',
-    missingAction: 'Present an honest competitor matrix and explain your durable moat or switching costs.',
-  },
-  {
-    name: 'Financial Forecast & Runway',
-    keywords: /\b(forecast|projection|burn|runway|p&l|cash flow|ebitda|break-even)\b/i,
-    slideHint: 'Financial Projections Slide',
-    missingAction: 'Provide a 3-to-5 year financial summary showing monthly burn, runway, and key assumptions.',
-  },
-  {
-    name: 'Team & Execution Pedigree',
-    keywords: /\b(team|founder|ceo|cto|experience|background|advisor)\b/i,
-    slideHint: 'Team Slide',
-    missingAction: 'Highlight relevant domain expertise and why your team is uniquely positioned to execute.',
-  },
-  {
-    name: 'The Ask & Use of Funds',
-    keywords: /\b(ask|raising|round|seed|pre-seed|use of funds|milestone|allocation)\b/i,
-    slideHint: 'Fundraising Ask Slide',
-    missingAction: 'State the exact raise target, instrument (e.g. Post-Money SAFE), and 18-month milestone allocation.',
+    maxScore: 15,
+    keywords: /\b(business model|pricing|cac|ltv|margin|payback|unit economics|subscription|monetization)\b/i,
+    missingInfo: 'Pricing model, gross margin, and CAC/LTV unit economics are missing.',
+    suggestedImprovement: 'State your pricing structure, target gross margin, and expected CAC payback period.',
+    generateContent: (company) =>
+      `${company} operates a recurring SaaS + usage model targeting >75% gross margins with disciplined customer acquisition payback.`,
   },
 ];
 
-async function tryExternalAiEvaluation(
-  text: string,
-  fileName: string,
-  estimatedPages: number
-): Promise<Omit<DeckEvaluationRecord, 'id' | 'userId' | 'fileName' | 'fileSizeBytes' | 'createdAt'> | null> {
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey || text.trim().length < 50) return null;
-
-  try {
-    const prompt = `You are an institutional VC partner evaluating a startup pitch deck (${fileName}, ~${estimatedPages} pages).
-Extracted deck text:
-"""
-${text.slice(0, 8000)}
-"""
-Return strictly valid JSON with keys:
-- overallScore (number 0-100)
-- summary (string)
-- presentSections (string[])
-- missingInformation (string[])
-- weakSlides (array of {slide, issue, fix})
-- financialNarrativeGaps (string[])
-- recommendations (string[])`;
-
-    const res = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [{ role: 'user', content: prompt }],
-        response_format: { type: 'json_object' },
-      }),
-    });
-
-    if (!res.ok) return null;
-    const data = await res.json();
-    const content = data?.choices?.[0]?.message?.content;
-    if (!content) return null;
-    const parsed = JSON.parse(content);
-    return {
-      estimatedSlides: estimatedPages,
-      overallScore: Number(parsed.overallScore) || 70,
-      aiPowered: true,
-      summary: String(parsed.summary || ''),
-      presentSections: Array.isArray(parsed.presentSections) ? parsed.presentSections : [],
-      missingInformation: Array.isArray(parsed.missingInformation) ? parsed.missingInformation : [],
-      weakSlides: Array.isArray(parsed.weakSlides) ? parsed.weakSlides : [],
-      financialNarrativeGaps: Array.isArray(parsed.financialNarrativeGaps)
-        ? parsed.financialNarrativeGaps
-        : [],
-      recommendations: Array.isArray(parsed.recommendations) ? parsed.recommendations : [],
-    };
-  } catch {
-    return null;
-  }
+function recalculateFrs(areas: FrsArea[]): { overallScore: number; errorCount: number } {
+  const overallScore = areas.reduce((sum, a) => sum + a.score, 0);
+  const errorCount = areas.filter((a) => a.status === 'issue').length;
+  return { overallScore, errorCount };
 }
 
 export async function GET() {
@@ -158,19 +155,15 @@ export async function GET() {
   if (!user || user.role !== 'startup') {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
-
   const db = readDb();
-  const evaluations = db.deckEvaluations
-    .filter((e) => e.userId === user.id)
-    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-
-  return NextResponse.json({ evaluations });
+  const frs = db.frsByUser[user.id] || null;
+  return NextResponse.json({ frs });
 }
 
 export async function POST(request: Request) {
   const user = getCurrentUser();
   if (!user || user.role !== 'startup') {
-    return NextResponse.json({ error: 'Unauthorized. Please log in as a Startup.' }, { status: 401 });
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
@@ -178,123 +171,110 @@ export async function POST(request: Request) {
     const file = formData.get('deck');
 
     if (!file || !(file instanceof File)) {
-      return NextResponse.json(
-        { error: 'Please upload a valid pitch deck PDF file.' },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: 'Please upload a pitch deck PDF file.' }, { status: 400 });
+    }
+    if (file.size === 0 || file.size > 20 * 1024 * 1024) {
+      return NextResponse.json({ error: 'Pitch deck PDF must be between 1 byte and 20 MB.' }, { status: 400 });
     }
 
-    if (file.size === 0) {
-      return NextResponse.json({ error: 'Uploaded file is empty.' }, { status: 400 });
-    }
+    const buffer = Buffer.from(await file.arrayBuffer());
+    const { text } = extractTextFromPdfBuffer(buffer);
+    const extractedCompanyName = extractCompanyName(text, file.name);
+    const extractedLogoUrl = buildBrandLogoDataUri(extractedCompanyName);
 
-    if (file.size > 20 * 1024 * 1024) {
-      return NextResponse.json(
-        { error: 'Pitch deck file must be under 20 MB.' },
-        { status: 400 }
-      );
-    }
+    const hasReadableText = text.trim().length >= 50;
 
-    const arrayBuffer = await file.arrayBuffer();
-    const buffer = Buffer.from(arrayBuffer);
-    const { text, estimatedPages } = extractTextFromPdfBuffer(buffer);
-
-    // Attempt LLM evaluation if configured, otherwise run deterministic institutional rubric analysis
-    let evalResult = await tryExternalAiEvaluation(text, file.name, estimatedPages);
-
-    if (!evalResult) {
-      const presentSections: string[] = [];
-      const missingInformation: string[] = [];
-      const weakSlides: Array<{ slide: string; issue: string; fix: string }> = [];
-      const financialNarrativeGaps: string[] = [];
-      const recommendations: string[] = [];
-
-      const hasReadableText = text.trim().length >= 60;
-
-      if (!hasReadableText) {
-        weakSlides.push({
-          slide: 'Full Document',
-          issue:
-            'Limited machine-readable text extracted (deck may be image-only or flattened vectors).',
-          fix: 'Export your pitch deck with selectable text layers so institutional screening tools and investors can parse key metrics.',
-        });
-      }
-
-      for (const item of VC_RUBRIC) {
-        if (hasReadableText && item.keywords.test(text)) {
-          presentSections.push(item.name);
-        } else {
-          missingInformation.push(item.name);
-          recommendations.push(item.missingAction);
-          if (
-            item.name.includes('Financial') ||
-            item.name.includes('Unit Economics') ||
-            item.name.includes('Ask')
-          ) {
-            financialNarrativeGaps.push(item.missingAction);
-          } else {
-            weakSlides.push({
-              slide: item.slideHint,
-              issue: `No clear coverage of ${item.name} detected in the uploaded deck.`,
-              fix: item.missingAction,
-            });
-          }
-        }
-      }
-
-      if (estimatedPages < 8) {
-        weakSlides.push({
-          slide: 'Deck Length',
-          issue: `Detected ${estimatedPages} page(s). Institutional seed decks typically span 10–14 focused slides.`,
-          fix: 'Expand missing core sections (Market Sizing, Unit Economics, and Use of Funds) without adding filler.',
-        });
-      } else if (estimatedPages > 20) {
-        weakSlides.push({
-          slide: 'Deck Length',
-          issue: `Detected ${estimatedPages} pages, which may cause narrative bloat during initial partner screening.`,
-          fix: 'Move supporting charts and deep technical tables to an Appendix or Virtual Data Room.',
-        });
-      }
-
-      const rubricRatio = presentSections.length / VC_RUBRIC.length;
-      const lengthScore = estimatedPages >= 8 && estimatedPages <= 18 ? 15 : 8;
-      const overallScore = hasReadableText
-        ? Math.min(96, Math.max(28, Math.round(rubricRatio * 80 + lengthScore)))
-        : 32;
-
-      const summary = hasReadableText
-        ? `Analyzed "${file.name}" (~${estimatedPages} slides). Detected ${presentSections.length} of ${VC_RUBRIC.length} core institutional underwriting sections.`
-        : `Analyzed "${file.name}" (~${estimatedPages} pages). The file appears image-based with minimal extractable text; structural recommendations are listed below.`;
-
-      evalResult = {
-        estimatedSlides: estimatedPages,
-        overallScore,
-        aiPowered: false,
-        summary,
-        presentSections,
-        missingInformation,
-        weakSlides,
-        financialNarrativeGaps,
-        recommendations,
+    const areas: FrsArea[] = FRS_RUBRIC.map((item) => {
+      const found = hasReadableText && item.keywords.test(text);
+      return {
+        id: item.id,
+        name: item.name,
+        score: found ? item.maxScore : Math.round(item.maxScore * 0.25),
+        maxScore: item.maxScore,
+        status: found ? 'complete' : 'issue',
+        missingInfo: found ? 'Detected in uploaded deck.' : item.missingInfo,
+        suggestedImprovement: item.suggestedImprovement,
+        generatedContent: item.generateContent(extractedCompanyName),
       };
-    }
+    });
 
-    const record: DeckEvaluationRecord = {
-      id: crypto.randomUUID(),
-      userId: user.id,
+    const { overallScore, errorCount } = recalculateFrs(areas);
+
+    const frsState: FrsState = {
       fileName: file.name,
-      fileSizeBytes: file.size,
-      ...evalResult,
-      createdAt: new Date().toISOString(),
+      extractedCompanyName,
+      overallScore,
+      errorCount,
+      areas,
+      updatedAt: new Date().toISOString(),
     };
 
     const db = readDb();
-    db.deckEvaluations.push(record);
+    db.frsByUser[user.id] = frsState;
+
+    // Auto-populate Company Profile with extracted Company Name & Company Logo
+    const userIdx = db.users.findIndex((u) => u.id === user.id);
+    if (userIdx !== -1) {
+      db.users[userIdx].companyName = extractedCompanyName;
+      db.users[userIdx].companyLogoUrl = extractedLogoUrl;
+    }
+
     writeDb(db);
 
-    return NextResponse.json({ success: true, evaluation: record }, { status: 201 });
+    return NextResponse.json({
+      success: true,
+      frs: frsState,
+      extractedProfile: {
+        companyName: extractedCompanyName,
+        companyLogoUrl: extractedLogoUrl,
+      },
+    });
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Failed to evaluate pitch deck';
+    const message = err instanceof Error ? err.message : 'Pitch deck evaluation failed';
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
+
+export async function PATCH(request: Request) {
+  const user = getCurrentUser();
+  if (!user || user.role !== 'startup') {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  try {
+    const body = await request.json();
+    const { areaId, approvedContent } = body;
+
+    const db = readDb();
+    const frs = db.frsByUser[user.id];
+    if (!frs) {
+      return NextResponse.json({ error: 'No pitch deck evaluation found.' }, { status: 404 });
+    }
+
+    const idx = frs.areas.findIndex((a) => a.id === areaId);
+    if (idx === -1) {
+      return NextResponse.json({ error: 'FRS area not found.' }, { status: 404 });
+    }
+
+    frs.areas[idx].status = 'complete';
+    frs.areas[idx].score = frs.areas[idx].maxScore;
+    frs.areas[idx].approvedContent =
+      typeof approvedContent === 'string' && approvedContent.trim()
+        ? approvedContent.trim()
+        : frs.areas[idx].generatedContent;
+    frs.areas[idx].missingInfo = 'Approved & applied by founder.';
+
+    const recalculated = recalculateFrs(frs.areas);
+    frs.overallScore = recalculated.overallScore;
+    frs.errorCount = recalculated.errorCount;
+    frs.updatedAt = new Date().toISOString();
+
+    db.frsByUser[user.id] = frs;
+    writeDb(db);
+
+    return NextResponse.json({ success: true, frs });
+  } catch (err: unknown) {
+    const message = err instanceof Error ? err.message : 'Failed to apply improvement';
     return NextResponse.json({ error: message }, { status: 500 });
   }
 }

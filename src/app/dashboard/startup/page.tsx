@@ -5,110 +5,147 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import {
-  FileText,
-  Calculator,
-  FolderLock,
-  HelpCircle,
   Upload,
   CheckCircle2,
-  AlertTriangle,
   AlertCircle,
   Loader2,
   LogOut,
-  Download,
-  Hash,
-  ChevronDown,
-  ChevronUp,
+  Sparkles,
+  Users,
+  Search,
+  Layers,
+  Plus,
+  Trash2,
+  Mail,
+  Wand2,
 } from 'lucide-react';
 
-interface UserProfile {
+interface StartupUser {
   id: string;
-  role: 'startup' | 'investor';
+  role: string;
   fullName: string;
   email: string;
-  startupName?: string;
-  startupDetails?: string;
+  companyName?: string;
+  companyLogoUrl?: string;
+  companyDetails?: string;
+  websiteUrl?: string;
+  stage?: string;
 }
 
-interface DeckEvaluation {
+interface FrsArea {
   id: string;
-  fileName: string;
-  fileSizeBytes: number;
-  estimatedSlides: number;
+  name: string;
+  score: number;
+  maxScore: number;
+  status: 'complete' | 'issue';
+  missingInfo: string;
+  suggestedImprovement: string;
+  generatedContent: string;
+  approvedContent?: string;
+}
+
+interface FrsState {
+  fileName?: string;
+  extractedCompanyName?: string;
   overallScore: number;
-  aiPowered: boolean;
-  summary: string;
-  presentSections: string[];
-  missingInformation: string[];
-  weakSlides: Array<{ slide: string; issue: string; fix: string }>;
-  financialNarrativeGaps: string[];
-  recommendations: string[];
-  createdAt: string;
-}
-
-interface DueDiligenceItem {
-  id: string;
-  title: string;
-  category: string;
-  completed: boolean;
-  hash?: string;
+  errorCount: number;
+  areas: FrsArea[];
   updatedAt: string;
 }
 
-const INVESTOR_FAQS = [
-  {
-    q: 'How does WaoU Fund evaluate my startup differently than generic AI tools?',
-    a: 'Generic LLMs have no domain context on venture capital underwriting standards. WaoU Fund is structured on 10,000+ institutional seed and Series-A term sheets, financial models, and diligence checklists. Our engine enforces stage-aware rules: for Pre-Seed we inspect founder pedigree and TAM, while for Seed and Series-A we ruthlessly evaluate CAC payback, unit economics, and Net Revenue Retention.',
-  },
-  {
-    q: 'Is my confidential pitch deck and financial data secure?',
-    a: 'We operate 256-bit AES encryption standards at rest and in transit. Your materials are never used to train public foundational models. Only you and the advisors you explicitly authorize can access your due diligence files.',
-  },
-  {
-    q: 'What is the 5-Vector Fundability Audit?',
-    a: 'WaoU Fund evaluates ventures across Financial Health & Runway (30%), Market Opportunity & TAM (25%), Traction & Retention (20%), Team Pedigree & Moats (15%), and Due Diligence Readiness (10%). Incomplete profiles are flagged with missing parameter checklists rather than unearned vanity numbers.',
-  },
-  {
-    q: 'Can I export the dynamic financial forecast to CSV / Excel?',
-    a: 'Yes. The Financial Forecast module generates a deterministic 5-year projection across Base, Conservative, and Growth scenarios that exports cleanly to CSV for Excel and investor data rooms.',
-  },
-  {
-    q: 'What documents do institutional investors expect in Due Diligence?',
-    a: 'At Pre-Seed and Seed, investors typically inspect your Certificate of Incorporation, Fully Diluted Cap Table, Founder IP Assignment & Vesting agreements, 5-Year Financial Forecast, recent bank statements, and key customer contracts.',
-  },
-];
+interface TeamAdvisorMember {
+  id: string;
+  name: string;
+  linkedinProfile: string;
+  role: string;
+  email: string;
+  invited: boolean;
+  inviteStatus?: string;
+}
+
+interface CompetitorItem {
+  name: string;
+  url: string;
+  offeringSummary: string;
+  positioning: string;
+}
+
+interface StrategyState {
+  gtmStrategy: string;
+  revenueModel: string;
+  stageSlides: string;
+  teamAdvisors: TeamAdvisorMember[];
+  hasLogo: boolean | null;
+  closingLogoUrl?: string;
+  competitors: CompetitorItem[];
+  improvedSolutionSlide?: string;
+  changeUspMoat: boolean | null;
+  uspMoatContent?: string;
+  generatedSlides: {
+    competitorAnalysis?: string;
+    tamSamSom?: string;
+    businessModelUnitEconomics?: string;
+  };
+}
 
 export default function StartupDashboardPage() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [user, setUser] = useState<UserProfile | null>(null);
-  const [authLoading, setAuthLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'deck' | 'forecast' | 'diligence' | 'faqs'>('deck');
+  const [user, setUser] = useState<StartupUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [activeSection, setActiveSection] = useState<'frs' | 'strategy' | 'competitors'>('frs');
 
-  // Pitch Deck Evaluation state
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
-  const [evaluating, setEvaluating] = useState(false);
-  const [deckError, setDeckError] = useState<string | null>(null);
-  const [evaluations, setEvaluations] = useState<DeckEvaluation[]>([]);
-  const [activeEval, setActiveEval] = useState<DeckEvaluation | null>(null);
+  // Pitch Deck Upload & FRS
+  const [frs, setFrs] = useState<FrsState | null>(null);
+  const [uploadingDeck, setUploadingDeck] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+  const [selectedIssueId, setSelectedIssueId] = useState<string | null>(null);
+  const [editableFix, setEditableFix] = useState('');
+  const [applyingFix, setApplyingFix] = useState(false);
 
-  // Financial Forecast state
-  const [startingMrr, setStartingMrr] = useState(12000);
-  const [monthlyGrowthPct, setMonthlyGrowthPct] = useState(12);
-  const [grossMarginPct, setGrossMarginPct] = useState(78);
-  const [monthlyBurn, setMonthlyBurn] = useState(18000);
-  const [cashOnHand, setCashOnHand] = useState(250000);
-  const [scenario, setScenario] = useState<'Conservative' | 'Base' | 'Growth'>('Base');
+  // Strategy Workflow (5-step sequence ONLY: GTM, Revenue Model, Stage Slides, Team & Advisors, Closing Slide)
+  const [strategy, setStrategy] = useState<StrategyState>({
+    gtmStrategy: '',
+    revenueModel: '',
+    stageSlides: '',
+    teamAdvisors: [],
+    hasLogo: null,
+    competitors: [],
+    changeUspMoat: null,
+    generatedSlides: {},
+  });
+  const [strategyStep, setStrategyStep] = useState<number>(1);
+  const [stage, setStage] = useState('Seed');
+  const [savingStrategy, setSavingStrategy] = useState(false);
+  const [strategySavedMsg, setStrategySavedMsg] = useState<string | null>(null);
 
-  // Due Diligence state
-  const [diligenceItems, setDiligenceItems] = useState<DueDiligenceItem[]>([]);
+  // Team & Advisors invite form
+  const [memberName, setMemberName] = useState('');
+  const [memberLinkedin, setMemberLinkedin] = useState('');
+  const [memberRole, setMemberRole] = useState('');
+  const [memberEmail, setMemberEmail] = useState('');
+  const [sendInvite, setSendInvite] = useState(true);
+  const [inviting, setInviting] = useState(false);
+  const [inviteMsg, setInviteMsg] = useState<string | null>(null);
 
-  // FAQ state
-  const [openFaq, setOpenFaq] = useState<number | null>(0);
+  // Closing Slide Logo generation
+  const [generatingLogo, setGeneratingLogo] = useState(false);
+
+  // Competitor Analysis (3 to 15 competitors)
+  const [competitorInputs, setCompetitorInputs] = useState<Array<{ name: string; url: string }>>([
+    { name: '', url: '' },
+    { name: '', url: '' },
+    { name: '', url: '' },
+  ]);
+  const [analyzingCompetitors, setAnalyzingCompetitors] = useState(false);
+  const [competitorError, setCompetitorError] = useState<string | null>(null);
+  const [proposedUsp, setProposedUsp] = useState('');
+  const [uspSavedMsg, setUspSavedMsg] = useState<string | null>(null);
+  const [showTractionHidden, setShowTractionHidden] = useState(false); // Hidden by default
 
   useEffect(() => {
-    async function loadSessionAndData() {
+    async function loadWorkspace() {
       try {
         const meRes = await fetch('/api/auth/me');
         if (!meRes.ok) {
@@ -120,33 +157,46 @@ export default function StartupDashboardPage() {
           router.push('/auth/startup/login');
           return;
         }
-        if (meData.user.role === 'investor') {
-          router.push('/dashboard/investor');
+        if (meData.user.role !== 'startup') {
+          router.push(meData.user.role === 'investor' ? '/dashboard/investor' : '/dashboard/enabler');
           return;
         }
         setUser(meData.user);
+        if (meData.user.stage) setStage(meData.user.stage);
 
-        const [evalRes, dilRes] = await Promise.all([
+        const [frsRes, stratRes] = await Promise.all([
           fetch('/api/deck/evaluate'),
-          fetch('/api/diligence'),
+          fetch('/api/strategy'),
         ]);
-        if (evalRes.ok) {
-          const evalData = await evalRes.json();
-          const list = evalData.evaluations || [];
-          setEvaluations(list);
-          if (list.length > 0) setActiveEval(list[0]);
+
+        if (frsRes.ok) {
+          const frsData = await frsRes.json();
+          if (frsData.frs) {
+            setFrs(frsData.frs);
+            const firstIssue = (frsData.frs.areas as FrsArea[]).find((a) => a.status === 'issue');
+            if (firstIssue) {
+              setSelectedIssueId(firstIssue.id);
+              setEditableFix(firstIssue.generatedContent);
+            }
+          }
         }
-        if (dilRes.ok) {
-          const dilData = await dilRes.json();
-          setDiligenceItems(dilData.items || []);
+
+        if (stratRes.ok) {
+          const stratData = await stratRes.json();
+          if (stratData.strategy) {
+            setStrategy(stratData.strategy);
+            if (stratData.strategy.uspMoatContent) {
+              setProposedUsp(stratData.strategy.uspMoatContent);
+            }
+          }
         }
       } catch {
         router.push('/auth/startup/login');
       } finally {
-        setAuthLoading(false);
+        setLoading(false);
       }
     }
-    loadSessionAndData();
+    loadWorkspace();
   }, [router]);
 
   const handleLogout = async () => {
@@ -155,96 +205,202 @@ export default function StartupDashboardPage() {
     router.refresh();
   };
 
-  const handleDeckUpload = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setDeckError(null);
-    if (!selectedFile) {
-      setDeckError('Please select a pitch deck PDF file to evaluate.');
-      return;
-    }
-
-    setEvaluating(true);
+  // Automatic file upload handler (triggers immediately on file selection)
+  const uploadDeckFile = async (file: File) => {
+    setUploadError(null);
+    setUploadingDeck(true);
     try {
       const formData = new FormData();
-      formData.append('deck', selectedFile);
-
+      formData.append('deck', file);
       const res = await fetch('/api/deck/evaluate', {
         method: 'POST',
         body: formData,
       });
-
       const data = await res.json();
-      if (!res.ok) {
-        throw new Error(data.error || 'Evaluation failed.');
-      }
+      if (!res.ok) throw new Error(data.error || 'Upload failed.');
 
-      const newEval = data.evaluation as DeckEvaluation;
-      setEvaluations((prev) => [newEval, ...prev]);
-      setActiveEval(newEval);
-      setSelectedFile(null);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setFrs(data.frs);
+      if (data.extractedProfile) {
+        setUser((prev) =>
+          prev
+            ? {
+                ...prev,
+                companyName: data.extractedProfile.companyName,
+                companyLogoUrl: data.extractedProfile.companyLogoUrl,
+              }
+            : prev
+        );
+      }
+      const firstIssue = (data.frs.areas as FrsArea[]).find((a) => a.status === 'issue');
+      if (firstIssue) {
+        setSelectedIssueId(firstIssue.id);
+        setEditableFix(firstIssue.generatedContent);
+      } else {
+        setSelectedIssueId(null);
+      }
     } catch (err: unknown) {
-      setDeckError(err instanceof Error ? err.message : 'Unable to evaluate pitch deck.');
+      setUploadError(err instanceof Error ? err.message : 'Unable to evaluate pitch deck.');
     } finally {
-      setEvaluating(false);
+      setUploadingDeck(false);
     }
   };
 
-  const toggleDiligence = async (itemId: string, currentCompleted: boolean) => {
+  const handleSelectIssue = (area: FrsArea) => {
+    setSelectedIssueId(area.id);
+    setEditableFix(area.approvedContent || area.generatedContent);
+  };
+
+  const handleApproveFix = async () => {
+    if (!selectedIssueId) return;
+    setApplyingFix(true);
     try {
-      const res = await fetch('/api/diligence', {
+      const res = await fetch('/api/deck/evaluate', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ itemId, completed: !currentCompleted }),
+        body: JSON.stringify({ areaId: selectedIssueId, approvedContent: editableFix }),
       });
-      if (res.ok) {
-        const data = await res.json();
-        setDiligenceItems(data.items || []);
+      const data = await res.json();
+      if (res.ok && data.frs) {
+        setFrs(data.frs);
+        // Automatically advance to the next remaining issue (one by one)
+        const nextIssue = (data.frs.areas as FrsArea[]).find((a) => a.status === 'issue');
+        if (nextIssue) {
+          setSelectedIssueId(nextIssue.id);
+          setEditableFix(nextIssue.generatedContent);
+        } else {
+          setSelectedIssueId(null);
+        }
       }
-    } catch {
-      // Keep current state on network failure
+    } finally {
+      setApplyingFix(false);
     }
   };
 
-  // Compute 5-year forecast rows
-  const scenarioMultiplier = scenario === 'Conservative' ? 0.75 : scenario === 'Growth' ? 1.3 : 1;
-  const effectiveMonthlyGrowth = (monthlyGrowthPct / 100) * scenarioMultiplier;
-  const forecastYears = [1, 2, 3, 4, 5].map((year) => {
-    let annualRev = 0;
-    for (let m = (year - 1) * 12; m < year * 12; m++) {
-      annualRev += startingMrr * Math.pow(1 + effectiveMonthlyGrowth * 0.65, m);
+  const handleSaveStrategyStep = async () => {
+    setSavingStrategy(true);
+    setStrategySavedMsg(null);
+    try {
+      const res = await fetch('/api/strategy', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          gtmStrategy: strategy.gtmStrategy,
+          revenueModel: strategy.revenueModel,
+          stageSlides: strategy.stageSlides,
+          stage,
+          hasLogo: strategy.hasLogo,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.strategy) {
+        setStrategy(data.strategy);
+        setStrategySavedMsg('Saved.');
+      }
+    } finally {
+      setSavingStrategy(false);
     }
-    const grossProfit = annualRev * (grossMarginPct / 100);
-    const annualOpex = monthlyBurn * 12 * Math.pow(1.22, year - 1);
-    const netCashFlow = grossProfit - annualOpex;
-    return {
-      year: `Year ${year}`,
-      revenue: Math.round(annualRev),
-      grossProfit: Math.round(grossProfit),
-      opex: Math.round(annualOpex),
-      netCashFlow: Math.round(netCashFlow),
-    };
-  });
-
-  const netMonthlyBurn = Math.max(0, monthlyBurn - startingMrr * (grossMarginPct / 100));
-  const runwayMonths =
-    netMonthlyBurn <= 0 ? 'Cash-Flow Positive' : `${Math.round(cashOnHand / netMonthlyBurn)} Months`;
-
-  const exportForecastCsv = () => {
-    const header = 'Year,Revenue (USD),Gross Profit (USD),Operating Expenses (USD),Net Cash Flow (USD)\n';
-    const rows = forecastYears
-      .map((r) => `${r.year},${r.revenue},${r.grossProfit},${r.opex},${r.netCashFlow}`)
-      .join('\n');
-    const blob = new Blob([header + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `${(user?.startupName || 'startup').replace(/\s+/g, '_')}_5yr_forecast.csv`;
-    a.click();
-    URL.revokeObjectURL(url);
   };
 
-  if (authLoading) {
+  const handleInviteMember = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setInviting(true);
+    setInviteMsg(null);
+    try {
+      const res = await fetch('/api/team/invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: memberName,
+          linkedinProfile: memberLinkedin,
+          role: memberRole,
+          email: memberEmail,
+          sendInvite,
+        }),
+      });
+      const data = await res.json();
+      if (res.ok && data.strategy) {
+        setStrategy(data.strategy);
+        setInviteMsg(data.member?.inviteStatus || 'Team member added.');
+        setMemberName('');
+        setMemberLinkedin('');
+        setMemberRole('');
+        setMemberEmail('');
+      }
+    } finally {
+      setInviting(false);
+    }
+  };
+
+  const handleLogoChoice = async (hasExistingLogo: boolean) => {
+    setStrategy((prev) => ({ ...prev, hasLogo: hasExistingLogo }));
+    await fetch('/api/strategy', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ hasLogo: hasExistingLogo }),
+    });
+  };
+
+  const handleGenerateAiLogo = async () => {
+    setGeneratingLogo(true);
+    try {
+      const res = await fetch('/api/logo/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ companyName: user?.companyName || 'WaoU Venture' }),
+      });
+      const data = await res.json();
+      if (res.ok && data.logoUrl) {
+        setUser((prev) => (prev ? { ...prev, companyLogoUrl: data.logoUrl } : prev));
+        if (data.strategy) setStrategy(data.strategy);
+      }
+    } finally {
+      setGeneratingLogo(false);
+    }
+  };
+
+  const handleAnalyzeCompetitors = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setCompetitorError(null);
+    setAnalyzingCompetitors(true);
+    try {
+      const res = await fetch('/api/competitors/analyze', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ competitors: competitorInputs }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Analysis failed.');
+      if (data.strategy) setStrategy(data.strategy);
+      if (data.proposedUspMoat) setProposedUsp(data.proposedUspMoat);
+    } catch (err: unknown) {
+      setCompetitorError(err instanceof Error ? err.message : 'Unable to analyze competitors.');
+    } finally {
+      setAnalyzingCompetitors(false);
+    }
+  };
+
+  const handleUspMoatDecision = async (shouldChange: boolean) => {
+    setUspSavedMsg(null);
+    const res = await fetch('/api/competitors/analyze', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        changeUspMoat: shouldChange,
+        uspMoatContent: proposedUsp,
+      }),
+    });
+    const data = await res.json();
+    if (res.ok && data.strategy) {
+      setStrategy(data.strategy);
+      setUspSavedMsg(
+        shouldChange
+          ? 'Updated USP & Moat applied to your solution profile.'
+          : 'Existing USP & Moat retained.'
+      );
+    }
+  };
+
+  if (loading) {
     return (
       <div className="min-h-screen bg-[#FAFBFF] flex items-center justify-center">
         <Loader2 className="w-6 h-6 animate-spin text-[#5368EA]" />
@@ -252,36 +408,30 @@ export default function StartupDashboardPage() {
     );
   }
 
-  const completedDiligenceCount = diligenceItems.filter((i) => i.completed).length;
-
-  const navItems = [
-    { id: 'deck' as const, label: 'Pitch Deck Evaluation', icon: FileText },
-    { id: 'forecast' as const, label: 'Financial Forecast', icon: Calculator },
-    { id: 'diligence' as const, label: 'Due Diligence', icon: FolderLock },
-    { id: 'faqs' as const, label: 'Investor FAQs', icon: HelpCircle },
-  ];
+  const activeIssue = frs?.areas.find((a) => a.id === selectedIssueId) || null;
 
   return (
     <div className="min-h-screen bg-[#FAFBFF] text-[#171A2E] flex flex-col">
-      {/* Compact Top Header */}
+      {/* Header */}
       <header className="bg-white border-b border-[#E9EAF2] px-6 sm:px-8 h-16 flex items-center justify-between sticky top-0 z-30">
         <div className="flex items-center gap-3">
           <Link href="/" className="flex items-center gap-2.5">
             <Image
-              src="/logo.png"
-              alt="WaoU Fund"
-              width={30}
-              height={30}
+              src={user?.companyLogoUrl || '/logo.png'}
+              alt={user?.companyName || 'WaoU Fund'}
+              width={32}
+              height={32}
               className="rounded-lg border border-[#E9EAF2]"
             />
             <span className="font-semibold text-base tracking-tight text-[#171A2E]">
-              WaoU Fund
+              {user?.companyName || 'WaoU Fund'}
             </span>
           </Link>
-          <span className="hidden sm:inline-block text-[#E9EAF2]">|</span>
-          <span className="hidden sm:inline-block text-xs font-medium text-[#68738A]">
-            {user?.startupName || 'Startup Workspace'}
-          </span>
+          {user?.companyName && (
+            <span className="hidden sm:inline-block text-xs text-[#68738A] bg-[#FAFBFF] px-2.5 py-0.5 rounded-full border border-[#E9EAF2]">
+              Extracted from Deck
+            </span>
+          )}
         </div>
 
         <div className="flex items-center gap-4">
@@ -296,471 +446,720 @@ export default function StartupDashboardPage() {
         </div>
       </header>
 
-      {/* Main Content */}
       <div className="max-w-6xl w-full mx-auto px-6 sm:px-8 py-8 flex-1 flex flex-col md:flex-row gap-8">
-        {/* Simple 4-Feature Sidebar */}
-        <aside className="w-full md:w-60 flex-shrink-0">
+        {/* Workspace Navigation */}
+        <aside className="w-full md:w-64 flex-shrink-0">
           <div className="bg-white rounded-2xl border border-[#E9EAF2] p-2 space-y-1">
-            <div className="px-3 py-2 text-[0.68rem] font-semibold uppercase tracking-wider text-[#68738A]">
-              Startup Workspace
-            </div>
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors text-left ${
-                    isActive
-                      ? 'bg-[#DDEBFF]/60 text-[#5368EA]'
-                      : 'text-[#68738A] hover:bg-[#FAFBFF] hover:text-[#171A2E]'
-                  }`}
-                >
-                  <Icon className={`w-4 h-4 ${isActive ? 'text-[#5368EA]' : 'text-[#68738A]'}`} />
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
+            <button
+              onClick={() => setActiveSection('frs')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors text-left ${
+                activeSection === 'frs'
+                  ? 'bg-[#DDEBFF]/60 text-[#5368EA]'
+                  : 'text-[#68738A] hover:bg-[#FAFBFF] hover:text-[#171A2E]'
+              }`}
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Pitch Deck &amp; FRS</span>
+            </button>
+            <button
+              onClick={() => setActiveSection('strategy')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors text-left ${
+                activeSection === 'strategy'
+                  ? 'bg-[#DDEBFF]/60 text-[#5368EA]'
+                  : 'text-[#68738A] hover:bg-[#FAFBFF] hover:text-[#171A2E]'
+              }`}
+            >
+              <Layers className="w-4 h-4" />
+              <span>Deck Creation &amp; Strategy</span>
+            </button>
+            <button
+              onClick={() => setActiveSection('competitors')}
+              className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-medium transition-colors text-left ${
+                activeSection === 'competitors'
+                  ? 'bg-[#DDEBFF]/60 text-[#5368EA]'
+                  : 'text-[#68738A] hover:bg-[#FAFBFF] hover:text-[#171A2E]'
+              }`}
+            >
+              <Search className="w-4 h-4" />
+              <span>Competitors &amp; Solution AI</span>
+            </button>
           </div>
         </aside>
 
-        {/* Active Feature Area */}
-        <main className="flex-1 min-w-0">
-          {/* 1. PITCH DECK EVALUATION (MOST PROMINENT) */}
-          {activeTab === 'deck' && (
+        {/* Main Workspace Panel */}
+        <main className="flex-1 min-w-0 space-y-6">
+          {/* SECTION 1: PITCH DECK UPLOAD & FUNDABILITY READINESS SCORE (FRS) */}
+          {activeSection === 'frs' && (
             <div className="space-y-6">
+              {/* Automatic Pitch Deck Upload */}
               <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8">
-                <div className="mb-6">
-                  <span className="text-xs font-semibold text-[#5368EA] uppercase tracking-wider">
-                    Feature 01 • Primary Diagnostic
-                  </span>
-                  <h1 className="text-2xl font-semibold text-[#171A2E] mt-1">
-                    Pitch Deck Evaluation
-                  </h1>
-                  <p className="text-sm text-[#68738A] mt-1">
-                    Upload your pitch deck PDF to evaluate structure, identify missing information,
-                    highlight weak slides, and uncover financial or business narrative gaps.
-                  </p>
-                </div>
+                <h1 className="text-xl font-semibold text-[#171A2E]">
+                  {frs ? 'Pitch Deck Uploaded' : 'Upload Your Pitch Deck'}
+                </h1>
+                <p className="text-sm text-[#68738A] mt-1 mb-5">
+                  Upload your PDF pitch deck. WaoU AI automatically extracts your Company Name and
+                  Company Logo and computes your Fundability Readiness Score (FRS).
+                </p>
 
-                {/* Mandatory Upload Form */}
-                <form onSubmit={handleDeckUpload} className="space-y-4">
-                  {deckError && (
-                    <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 flex-shrink-0" />
-                      <span>{deckError}</span>
+                {uploadError && (
+                  <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{uploadError}</span>
+                  </div>
+                )}
+
+                <label className="block border-2 border-dashed border-[#E9EAF2] hover:border-[#5368EA]/50 rounded-2xl p-6 bg-[#FAFBFF] text-center cursor-pointer transition-colors">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".pdf,application/pdf"
+                    className="hidden"
+                    onChange={(e) => {
+                      const f = e.target.files?.[0];
+                      if (f) uploadDeckFile(f);
+                    }}
+                  />
+                  {uploadingDeck ? (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <Loader2 className="w-6 h-6 animate-spin text-[#5368EA]" />
+                      <span className="text-xs font-medium text-[#5368EA]">
+                        Extracting Company Name, Logo &amp; calculating FRS...
+                      </span>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col items-center gap-2 py-2">
+                      <Upload className="w-5 h-5 text-[#5368EA]" />
+                      <span className="text-sm font-medium text-[#171A2E]">
+                        {frs?.fileName
+                          ? `Current deck: ${frs.fileName} (Click to replace)`
+                          : 'Click to select Pitch Deck PDF'}
+                      </span>
+                      <span className="text-xs text-[#68738A]">PDF up to 20 MB</span>
                     </div>
                   )}
-
-                  <div className="border-2 border-dashed border-[#E9EAF2] hover:border-[#5368EA]/50 rounded-2xl p-6 sm:p-8 bg-[#FAFBFF] text-center transition-colors">
-                    <div className="w-11 h-11 rounded-2xl bg-[#DDEBFF]/70 text-[#5368EA] flex items-center justify-center mx-auto mb-3">
-                      <Upload className="w-5 h-5" />
-                    </div>
-                    <p className="text-sm font-medium text-[#171A2E] mb-1">
-                      {selectedFile ? selectedFile.name : 'Select your pitch deck PDF'}
-                    </p>
-                    <p className="text-xs text-[#68738A] mb-4">
-                      PDF format up to 20 MB. Required for structured AI &amp; rubric evaluation.
-                    </p>
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept=".pdf,application/pdf"
-                      onChange={(e) => setSelectedFile(e.target.files?.[0] || null)}
-                      className="block mx-auto text-xs text-[#68738A] file:mr-3 file:py-2 file:px-4 file:rounded-full file:border file:border-[#E9EAF2] file:text-xs file:font-medium file:bg-white file:text-[#171A2E] hover:file:bg-[#FAFBFF] cursor-pointer"
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    disabled={evaluating}
-                    className="btn-waou-gradient py-3 px-7 text-sm inline-flex items-center gap-2 disabled:opacity-60"
-                  >
-                    {evaluating ? (
-                      <>
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        <span>Analyzing Pitch Deck...</span>
-                      </>
-                    ) : (
-                      <span>Upload &amp; Evaluate Pitch Deck</span>
-                    )}
-                  </button>
-                </form>
+                </label>
               </div>
 
-              {/* Structured Evaluation Output */}
-              {activeEval && (
+              {/* FRS Display */}
+              {frs && (
                 <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8 space-y-6">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-[#E9EAF2]">
                     <div>
-                      <div className="text-xs text-[#68738A]">
-                        Evaluated File: <strong className="text-[#171A2E]">{activeEval.fileName}</strong> • ~
-                        {activeEval.estimatedSlides} slides
-                      </div>
-                      <h2 className="text-lg font-semibold text-[#171A2E] mt-1">
-                        Structured Evaluation Report
+                      <h2 className="text-lg font-semibold text-[#171A2E]">
+                        Fundability Readiness Score (FRS)
                       </h2>
-                      <p className="text-xs text-[#68738A] mt-1">{activeEval.summary}</p>
+                      <p className="text-xs text-[#68738A] mt-1">
+                        {frs.errorCount} error(s) / areas of improvement detected. Click any issue
+                        below to review and apply AI improvements one by one.
+                      </p>
                     </div>
-                    <div className="bg-[#FAFBFF] border border-[#E9EAF2] rounded-2xl px-5 py-3 text-center flex-shrink-0">
-                      <div className="text-3xl font-bold text-[#5368EA]">
-                        {activeEval.overallScore}
-                        <span className="text-sm font-normal text-[#68738A]">/100</span>
+                    <div className="flex items-center gap-4">
+                      <div className="px-4 py-2 rounded-2xl bg-[#FAFBFF] border border-[#E9EAF2] text-center">
+                        <div className="text-2xl font-bold text-[#5368EA]">
+                          {frs.overallScore}
+                          <span className="text-xs font-normal text-[#68738A]">/100</span>
+                        </div>
+                        <div className="text-[0.65rem] text-[#68738A]">FRS Score</div>
                       </div>
-                      <div className="text-[0.68rem] text-[#68738A] font-medium">Readiness Score</div>
+                      <div className="px-4 py-2 rounded-2xl bg-[#FAFBFF] border border-[#E9EAF2] text-center">
+                        <div className="text-2xl font-bold text-amber-600">{frs.errorCount}</div>
+                        <div className="text-[0.65rem] text-[#68738A]">Errors Detected</div>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Missing Information */}
-                  {activeEval.missingInformation.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#171A2E]">
-                        Missing Information
-                      </h3>
-                      <div className="flex flex-wrap gap-2">
-                        {activeEval.missingInformation.map((item, idx) => (
-                          <span
-                            key={idx}
-                            className="px-3 py-1 rounded-full bg-amber-50 border border-amber-200 text-amber-800 text-xs font-medium"
-                          >
-                            {item}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Weak Slides */}
-                  {activeEval.weakSlides.length > 0 && (
-                    <div className="space-y-2.5">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#171A2E]">
-                        Weak Slides &amp; Structural Issues
-                      </h3>
-                      <div className="space-y-2.5">
-                        {activeEval.weakSlides.map((ws, idx) => (
-                          <div
-                            key={idx}
-                            className="p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] space-y-1"
-                          >
-                            <div className="flex items-center gap-2 text-xs font-semibold text-[#171A2E]">
-                              <AlertTriangle className="w-3.5 h-3.5 text-amber-600" />
-                              <span>{ws.slide}</span>
-                            </div>
-                            <p className="text-xs text-[#68738A]">{ws.issue}</p>
-                            <p className="text-xs text-[#5368EA] font-medium">Fix: {ws.fix}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Financial & Business Narrative Gaps */}
-                  {activeEval.financialNarrativeGaps.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#171A2E]">
-                        Financial &amp; Business Narrative Gaps
-                      </h3>
-                      <ul className="space-y-1.5 text-xs text-[#68738A]">
-                        {activeEval.financialNarrativeGaps.map((gap, idx) => (
-                          <li key={idx} className="flex items-start gap-2">
-                            <span className="text-[#8069EA] font-bold">•</span>
-                            <span>{gap}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  {/* Actionable Recommendations */}
-                  {activeEval.recommendations.length > 0 && (
-                    <div className="space-y-2">
-                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#171A2E]">
-                        Actionable Recommendations
-                      </h3>
-                      <div className="space-y-1.5">
-                        {activeEval.recommendations.map((rec, idx) => (
-                          <div
-                            key={idx}
-                            className="p-3 rounded-xl bg-[#DDEBFF]/30 border border-[#DDEBFF] text-xs text-[#171A2E] flex items-start gap-2"
-                          >
-                            <CheckCircle2 className="w-3.5 h-3.5 text-[#5368EA] mt-0.5 flex-shrink-0" />
-                            <span>{rec}</span>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Previous Evaluations History */}
-              {evaluations.length > 1 && (
-                <div className="bg-white rounded-2xl border border-[#E9EAF2] p-5 space-y-3">
-                  <h3 className="text-xs font-semibold uppercase tracking-wider text-[#68738A]">
-                    Previous Evaluations
-                  </h3>
-                  <div className="divide-y divide-[#E9EAF2]">
-                    {evaluations.map((ev) => (
-                      <button
-                        key={ev.id}
-                        onClick={() => setActiveEval(ev)}
-                        className="w-full py-2.5 flex items-center justify-between text-left hover:bg-[#FAFBFF] px-2 rounded-lg transition-colors"
-                      >
-                        <span className="text-xs font-medium text-[#171A2E]">{ev.fileName}</span>
-                        <span className="text-xs font-semibold text-[#5368EA]">
-                          {ev.overallScore}/100
-                        </span>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* 2. FINANCIAL FORECAST */}
-          {activeTab === 'forecast' && (
-            <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <span className="text-xs font-semibold text-[#5368EA] uppercase tracking-wider">
-                    Feature 02 • 5-Year Model
-                  </span>
-                  <h1 className="text-2xl font-semibold text-[#171A2E] mt-1">Financial Forecast</h1>
-                  <p className="text-sm text-[#68738A] mt-1">
-                    Model your 5-year revenue, gross profit, operating burn, and runway.
-                  </p>
-                </div>
-                <button
-                  onClick={exportForecastCsv}
-                  className="btn-waou-outline px-4 py-2 text-xs inline-flex items-center gap-1.5 self-start"
-                >
-                  <Download className="w-3.5 h-3.5" />
-                  <span>Export CSV</span>
-                </button>
-              </div>
-
-              {/* Scenario & Runway Summary */}
-              <div className="flex flex-wrap items-center justify-between gap-4 p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2]">
-                <div className="flex items-center gap-2">
-                  {(['Conservative', 'Base', 'Growth'] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setScenario(s)}
-                      className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
-                        scenario === s
-                          ? 'bg-[#5368EA] text-white'
-                          : 'bg-white border border-[#E9EAF2] text-[#68738A] hover:text-[#171A2E]'
-                      }`}
-                    >
-                      {s}
-                    </button>
-                  ))}
-                </div>
-                <div className="text-xs font-medium text-[#68738A]">
-                  Estimated Runway:{' '}
-                  <strong className="text-[#171A2E] font-semibold">{runwayMonths}</strong>
-                </div>
-              </div>
-
-              {/* Inputs */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-xs font-medium text-[#171A2E] mb-1">
-                    Starting MRR ($)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={startingMrr}
-                    onChange={(e) => setStartingMrr(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#171A2E] mb-1">
-                    Monthly Growth (%)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={monthlyGrowthPct}
-                    onChange={(e) => setMonthlyGrowthPct(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#171A2E] mb-1">
-                    Gross Margin (%)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    max={100}
-                    value={grossMarginPct}
-                    onChange={(e) => setGrossMarginPct(Math.max(0, Math.min(100, Number(e.target.value))))}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#171A2E] mb-1">
-                    Monthly Operating Burn ($)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={monthlyBurn}
-                    onChange={(e) => setMonthlyBurn(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs font-medium text-[#171A2E] mb-1">
-                    Cash Balance ($)
-                  </label>
-                  <input
-                    type="number"
-                    min={0}
-                    value={cashOnHand}
-                    onChange={(e) => setCashOnHand(Math.max(0, Number(e.target.value)))}
-                    className="w-full px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm"
-                  />
-                </div>
-              </div>
-
-              {/* 5-Year Table */}
-              <div className="overflow-x-auto border border-[#E9EAF2] rounded-xl">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-[#FAFBFF] text-[#68738A] border-b border-[#E9EAF2]">
-                    <tr>
-                      <th className="py-3 px-4 font-semibold">Period</th>
-                      <th className="py-3 px-4 font-semibold">Annual Revenue</th>
-                      <th className="py-3 px-4 font-semibold">Gross Profit</th>
-                      <th className="py-3 px-4 font-semibold">Operating Expenses</th>
-                      <th className="py-3 px-4 font-semibold">Net Cash Flow</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-[#E9EAF2]">
-                    {forecastYears.map((row) => (
-                      <tr key={row.year} className="hover:bg-[#FAFBFF]">
-                        <td className="py-3 px-4 font-medium text-[#171A2E]">{row.year}</td>
-                        <td className="py-3 px-4">${row.revenue.toLocaleString()}</td>
-                        <td className="py-3 px-4">${row.grossProfit.toLocaleString()}</td>
-                        <td className="py-3 px-4">${row.opex.toLocaleString()}</td>
-                        <td
-                          className={`py-3 px-4 font-medium ${
-                            row.netCashFlow >= 0 ? 'text-emerald-600' : 'text-amber-700'
+                  {/* Clickable 7 Evaluation Areas */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {frs.areas.map((area) => {
+                      const isSelected = selectedIssueId === area.id;
+                      const isIssue = area.status === 'issue';
+                      return (
+                        <button
+                          key={area.id}
+                          type="button"
+                          onClick={() => handleSelectIssue(area)}
+                          className={`p-3.5 rounded-xl border text-left transition-all flex items-center justify-between ${
+                            isSelected
+                              ? 'border-[#5368EA] bg-[#DDEBFF]/30'
+                              : 'border-[#E9EAF2] bg-[#FAFBFF] hover:bg-white'
                           }`}
                         >
-                          {row.netCashFlow >= 0 ? '+' : '-'}$
-                          {Math.abs(row.netCashFlow).toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          )}
-
-          {/* 3. DUE DILIGENCE */}
-          {activeTab === 'diligence' && (
-            <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8 space-y-6">
-              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                  <span className="text-xs font-semibold text-[#5368EA] uppercase tracking-wider">
-                    Feature 03 • Readiness Checklist
-                  </span>
-                  <h1 className="text-2xl font-semibold text-[#171A2E] mt-1">Due Diligence</h1>
-                  <p className="text-sm text-[#68738A] mt-1">
-                    Organize and verify required diligence materials with SHA-256 hash stamping.
-                  </p>
-                </div>
-                <div className="px-3.5 py-1.5 rounded-full bg-[#DDEBFF]/60 text-[#5368EA] text-xs font-semibold">
-                  {completedDiligenceCount} / {diligenceItems.length} Ready
-                </div>
-              </div>
-
-              <div className="divide-y divide-[#E9EAF2] border border-[#E9EAF2] rounded-2xl overflow-hidden">
-                {diligenceItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="p-4 flex items-center justify-between gap-4 bg-white hover:bg-[#FAFBFF] transition-colors"
-                  >
-                    <div className="space-y-1">
-                      <div className="text-sm font-medium text-[#171A2E]">{item.title}</div>
-                      <div className="flex items-center gap-2 text-[0.7rem] text-[#68738A]">
-                        <span className="px-2 py-0.5 rounded-full bg-[#E8DEFF]/60 text-[#8069EA] font-medium">
-                          {item.category}
-                        </span>
-                        {item.hash && (
-                          <span className="font-mono flex items-center gap-1">
-                            <Hash className="w-3 h-3" />
-                            SHA-256: {item.hash}
+                          <div>
+                            <div className="text-xs font-semibold text-[#171A2E]">{area.name}</div>
+                            <div className="text-[0.68rem] text-[#68738A] mt-0.5">
+                              {isIssue ? 'Click to fix issue' : 'Complete'}
+                            </div>
+                          </div>
+                          <span
+                            className={`text-xs font-semibold px-2.5 py-0.5 rounded-full ${
+                              isIssue
+                                ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                                : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                            }`}
+                          >
+                            {area.score}/{area.maxScore}
                           </span>
-                        )}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  {/* ONE-BY-ONE Improvement Panel */}
+                  {activeIssue && (
+                    <div className="p-5 rounded-2xl border border-[#5368EA]/30 bg-[#FAFBFF] space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-sm font-semibold text-[#171A2E]">
+                          {activeIssue.name}
+                        </h3>
+                        <span className="text-xs font-medium text-[#5368EA]">
+                          {activeIssue.score}/{activeIssue.maxScore} pts
+                        </span>
+                      </div>
+
+                      <div className="text-xs text-[#68738A] space-y-1.5">
+                        <p>
+                          <strong className="text-[#171A2E]">Missing Information:</strong>{' '}
+                          {activeIssue.missingInfo}
+                        </p>
+                        <p>
+                          <strong className="text-[#171A2E]">Suggested Improvement:</strong>{' '}
+                          {activeIssue.suggestedImprovement}
+                        </p>
+                      </div>
+
+                      <div>
+                        <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
+                          AI-Generated Content (Review &amp; Edit Before Approval)
+                        </label>
+                        <textarea
+                          rows={3}
+                          value={editableFix}
+                          onChange={(e) => setEditableFix(e.target.value)}
+                          className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-white text-xs text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+                        />
+                      </div>
+
+                      <div className="flex items-center gap-3">
+                        <button
+                          type="button"
+                          onClick={handleApproveFix}
+                          disabled={applyingFix}
+                          className="btn-waou-gradient px-5 py-2 text-xs inline-flex items-center gap-1.5"
+                        >
+                          {applyingFix ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <CheckCircle2 className="w-3.5 h-3.5" />
+                          )}
+                          <span>Approve &amp; Recalculate Score</span>
+                        </button>
                       </div>
                     </div>
-
-                    <button
-                      onClick={() => toggleDiligence(item.id, item.completed)}
-                      className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-colors flex-shrink-0 ${
-                        item.completed
-                          ? 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                          : 'bg-[#FAFBFF] text-[#68738A] border border-[#E9EAF2] hover:text-[#171A2E]'
-                      }`}
-                    >
-                      {item.completed ? 'Verified' : 'Mark Ready'}
-                    </button>
-                  </div>
-                ))}
-              </div>
+                  )}
+                </div>
+              )}
             </div>
           )}
 
-          {/* 4. INVESTOR FAQs */}
-          {activeTab === 'faqs' && (
+          {/* SECTION 2: PITCH DECK CREATION & STRATEGY WORKFLOW (5 STEPS ONLY — NO FINANCIAL FORECAST/RUNWAY) */}
+          {activeSection === 'strategy' && (
             <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8 space-y-6">
               <div>
-                <span className="text-xs font-semibold text-[#5368EA] uppercase tracking-wider">
-                  Feature 04 • Underwriting Reference
-                </span>
-                <h1 className="text-2xl font-semibold text-[#171A2E] mt-1">Investor FAQs</h1>
-                <p className="text-sm text-[#68738A] mt-1">
-                  Essential questions and institutional underwriting context for founders.
+                <h1 className="text-xl font-semibold text-[#171A2E]">
+                  Pitch Deck Creation &amp; Strategy Workflow
+                </h1>
+                <p className="text-xs text-[#68738A] mt-1">
+                  Complete the 5-step sequence: GTM Strategy, Revenue Model, Stage Slides, Team
+                  &amp; Advisors, and Final / Closing Slide.
                 </p>
               </div>
 
-              <div className="space-y-2.5">
-                {INVESTOR_FAQS.map((faq, idx) => {
-                  const isOpen = openFaq === idx;
-                  return (
-                    <div
-                      key={idx}
-                      className="rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] overflow-hidden"
+              {/* 5-Step Selector */}
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { num: 1, label: '1. GTM Strategy' },
+                  { num: 2, label: '2. Revenue Model' },
+                  { num: 3, label: '3. Stage Slides' },
+                  { num: 4, label: '4. Team & Advisors' },
+                  { num: 5, label: '5. Final / Closing Slide' },
+                ].map((s) => (
+                  <button
+                    key={s.num}
+                    type="button"
+                    onClick={() => {
+                      setStrategyStep(s.num);
+                      setStrategySavedMsg(null);
+                    }}
+                    className={`px-3.5 py-2 rounded-full text-xs font-medium transition-colors ${
+                      strategyStep === s.num
+                        ? 'bg-[#5368EA] text-white'
+                        : 'bg-[#FAFBFF] border border-[#E9EAF2] text-[#68738A] hover:text-[#171A2E]'
+                    }`}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Step 1: GTM Strategy */}
+              {strategyStep === 1 && (
+                <div className="space-y-4">
+                  <label className="block text-xs font-medium text-[#171A2E]">
+                    Go-To-Market (GTM) Strategy
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={strategy.gtmStrategy}
+                    onChange={(e) =>
+                      setStrategy((prev) => ({ ...prev, gtmStrategy: e.target.value }))
+                    }
+                    placeholder="Outline your primary acquisition channels, target customer segments, and initial distribution rollout..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+                  />
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSaveStrategyStep}
+                      disabled={savingStrategy}
+                      className="btn-waou-gradient px-5 py-2.5 text-xs"
                     >
+                      {savingStrategy ? 'Saving...' : 'Save GTM Strategy'}
+                    </button>
+                    {strategySavedMsg && (
+                      <span className="text-xs text-emerald-600 font-medium">{strategySavedMsg}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 2: Revenue Model */}
+              {strategyStep === 2 && (
+                <div className="space-y-4">
+                  <label className="block text-xs font-medium text-[#171A2E]">
+                    Revenue Model
+                  </label>
+                  <textarea
+                    rows={5}
+                    value={strategy.revenueModel}
+                    onChange={(e) =>
+                      setStrategy((prev) => ({ ...prev, revenueModel: e.target.value }))
+                    }
+                    placeholder="Describe your pricing tiers, transaction fees, or subscription structure..."
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+                  />
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSaveStrategyStep}
+                      disabled={savingStrategy}
+                      className="btn-waou-gradient px-5 py-2.5 text-xs"
+                    >
+                      {savingStrategy ? 'Saving...' : 'Save Revenue Model'}
+                    </button>
+                    {strategySavedMsg && (
+                      <span className="text-xs text-emerald-600 font-medium">{strategySavedMsg}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 3: Additional slides based on startup's stage */}
+              {strategyStep === 3 && (
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
+                      Startup Stage
+                    </label>
+                    <select
+                      value={stage}
+                      onChange={(e) => setStage(e.target.value)}
+                      className="w-full sm:w-64 px-3.5 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm"
+                    >
+                      <option value="Idea / Solopreneur">Idea / Solopreneur</option>
+                      <option value="Pre-Seed">Pre-Seed</option>
+                      <option value="Seed">Seed</option>
+                      <option value="Series A">Series A</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-[#171A2E] mb-1.5">
+                      Stage-Specific Additional Slides
+                    </label>
+                    <textarea
+                      rows={5}
+                      value={strategy.stageSlides}
+                      onChange={(e) =>
+                        setStrategy((prev) => ({ ...prev, stageSlides: e.target.value }))
+                      }
+                      placeholder={`Add ${stage}-appropriate slides (e.g., Product Roadmap, Regulatory Readiness, Key Partnerships)...`}
+                      className="w-full px-3.5 py-2.5 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-sm text-[#171A2E] focus:outline-none focus:border-[#5368EA]"
+                    />
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button
+                      type="button"
+                      onClick={handleSaveStrategyStep}
+                      disabled={savingStrategy}
+                      className="btn-waou-gradient px-5 py-2.5 text-xs"
+                    >
+                      {savingStrategy ? 'Saving...' : 'Save Stage Slides'}
+                    </button>
+                    {strategySavedMsg && (
+                      <span className="text-xs text-emerald-600 font-medium">{strategySavedMsg}</span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Step 4: Team & Advisors + Automated Email Collaboration Invite */}
+              {strategyStep === 4 && (
+                <div className="space-y-6">
+                  <form onSubmit={handleInviteMember} className="space-y-3 p-4 rounded-2xl bg-[#FAFBFF] border border-[#E9EAF2]">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-[#171A2E]">
+                      <Users className="w-4 h-4 text-[#5368EA]" />
+                      <span>Add Team Member or Advisor</span>
+                    </div>
+
+                    {inviteMsg && (
+                      <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs">
+                        {inviteMsg}
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      <input
+                        type="text"
+                        required
+                        value={memberName}
+                        onChange={(e) => setMemberName(e.target.value)}
+                        placeholder="Name"
+                        className="px-3 py-2 rounded-xl border border-[#E9EAF2] bg-white text-xs"
+                      />
+                      <input
+                        type="url"
+                        value={memberLinkedin}
+                        onChange={(e) => setMemberLinkedin(e.target.value)}
+                        placeholder="LinkedIn Profile URL"
+                        className="px-3 py-2 rounded-xl border border-[#E9EAF2] bg-white text-xs"
+                      />
+                      <input
+                        type="text"
+                        required
+                        value={memberRole}
+                        onChange={(e) => setMemberRole(e.target.value)}
+                        placeholder="Role (e.g. Co-Founder, Advisor)"
+                        className="px-3 py-2 rounded-xl border border-[#E9EAF2] bg-white text-xs"
+                      />
+                      <input
+                        type="email"
+                        required
+                        value={memberEmail}
+                        onChange={(e) => setMemberEmail(e.target.value)}
+                        placeholder="Email ID"
+                        className="px-3 py-2 rounded-xl border border-[#E9EAF2] bg-white text-xs"
+                      />
+                    </div>
+
+                    <label className="flex items-center gap-2 text-xs text-[#68738A] cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={sendInvite}
+                        onChange={(e) => setSendInvite(e.target.checked)}
+                        className="accent-[#5368EA]"
+                      />
+                      <span>Send automated collaboration invitation email</span>
+                    </label>
+
+                    <button
+                      type="submit"
+                      disabled={inviting}
+                      className="btn-waou-gradient px-5 py-2 text-xs inline-flex items-center gap-1.5"
+                    >
+                      <Mail className="w-3.5 h-3.5" />
+                      <span>{inviting ? 'Sending...' : 'Add & Invite'}</span>
+                    </button>
+                  </form>
+
+                  {strategy.teamAdvisors.length > 0 && (
+                    <div className="divide-y divide-[#E9EAF2] border border-[#E9EAF2] rounded-2xl overflow-hidden">
+                      {strategy.teamAdvisors.map((m) => (
+                        <div key={m.id} className="p-3.5 flex items-center justify-between text-xs">
+                          <div>
+                            <div className="font-semibold text-[#171A2E]">
+                              {m.name} — <span className="text-[#5368EA]">{m.role}</span>
+                            </div>
+                            <div className="text-[#68738A] mt-0.5">{m.email}</div>
+                          </div>
+                          <span className="text-[0.68rem] px-2.5 py-0.5 rounded-full bg-[#DDEBFF]/60 text-[#5368EA]">
+                            {m.invited ? 'Invited' : 'Added'}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Step 5: Final / Closing Slide */}
+              {strategyStep === 5 && (
+                <div className="space-y-5 p-5 rounded-2xl bg-[#FAFBFF] border border-[#E9EAF2]">
+                  <div>
+                    <div className="text-xs font-semibold text-[#171A2E] mb-2">
+                      Does your company have a logo?
+                    </div>
+                    <div className="flex gap-3 max-w-xs">
                       <button
-                        onClick={() => setOpenFaq(isOpen ? null : idx)}
-                        className="w-full p-4 text-left flex items-center justify-between gap-4"
+                        type="button"
+                        onClick={() => handleLogoChoice(true)}
+                        className={`flex-1 py-2 rounded-xl border text-xs font-medium ${
+                          strategy.hasLogo === true
+                            ? 'border-[#5368EA] bg-[#DDEBFF]/50 text-[#5368EA]'
+                            : 'border-[#E9EAF2] bg-white text-[#68738A]'
+                        }`}
                       >
-                        <span className="text-sm font-medium text-[#171A2E]">{faq.q}</span>
-                        {isOpen ? (
-                          <ChevronUp className="w-4 h-4 text-[#5368EA] flex-shrink-0" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-[#68738A] flex-shrink-0" />
-                        )}
+                        Yes
                       </button>
-                      {isOpen && (
-                        <div className="px-4 pb-4 pt-1 text-xs sm:text-sm text-[#68738A] leading-relaxed border-t border-[#E9EAF2]">
-                          {faq.a}
+                      <button
+                        type="button"
+                        onClick={() => handleLogoChoice(false)}
+                        className={`flex-1 py-2 rounded-xl border text-xs font-medium ${
+                          strategy.hasLogo === false
+                            ? 'border-[#5368EA] bg-[#DDEBFF]/50 text-[#5368EA]'
+                            : 'border-[#E9EAF2] bg-white text-[#68738A]'
+                        }`}
+                      >
+                        No
+                      </button>
+                    </div>
+                  </div>
+
+                  {strategy.hasLogo === false && (
+                    <div>
+                      <button
+                        type="button"
+                        onClick={handleGenerateAiLogo}
+                        disabled={generatingLogo}
+                        className="btn-waou-gradient px-5 py-2.5 text-xs inline-flex items-center gap-2"
+                      >
+                        <Wand2 className="w-3.5 h-3.5" />
+                        <span>{generatingLogo ? 'Generating Logo...' : 'Generate AI Logo'}</span>
+                      </button>
+                    </div>
+                  )}
+
+                  {(user?.companyLogoUrl || strategy.closingLogoUrl) && (
+                    <div className="p-6 rounded-2xl bg-white border border-[#E9EAF2] text-center space-y-3">
+                      <Image
+                        src={strategy.closingLogoUrl || user?.companyLogoUrl || '/logo.png'}
+                        alt="Company Logo"
+                        width={64}
+                        height={64}
+                        className="mx-auto rounded-2xl border border-[#E9EAF2]"
+                      />
+                      <div className="text-base font-semibold text-[#171A2E]">
+                        {user?.companyName || 'Your Venture'}
+                      </div>
+                      <div className="text-xs text-[#68738A]">
+                        Thank You • Contact: {user?.email}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* SECTION 3: COMPETITOR ANALYSIS & AI SOLUTION IMPROVEMENT */}
+          {activeSection === 'competitors' && (
+            <div className="space-y-6">
+              <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8 space-y-5">
+                <div>
+                  <h1 className="text-xl font-semibold text-[#171A2E]">
+                    Competitor Analysis &amp; AI Solution Improvement
+                  </h1>
+                  <p className="text-xs text-[#68738A] mt-1">
+                    Identify 3 to 15 nearby or relevant competitors with their website URLs. WaoU AI
+                    researches their offerings, suggests an improved Solution Slide, and generates
+                    your Competitor Analysis, TAM / SAM / SOM, and Business Model &amp; Unit
+                    Economics slides.
+                  </p>
+                </div>
+
+                {competitorError && (
+                  <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-xs flex items-center gap-2">
+                    <AlertCircle className="w-4 h-4 flex-shrink-0" />
+                    <span>{competitorError}</span>
+                  </div>
+                )}
+
+                <form onSubmit={handleAnalyzeCompetitors} className="space-y-3">
+                  {competitorInputs.map((comp, idx) => (
+                    <div key={idx} className="grid grid-cols-1 sm:grid-cols-12 gap-2.5 items-center">
+                      <input
+                        type="text"
+                        required
+                        value={comp.name}
+                        onChange={(e) => {
+                          const next = [...competitorInputs];
+                          next[idx].name = e.target.value;
+                          setCompetitorInputs(next);
+                        }}
+                        placeholder={`Competitor ${idx + 1} Name`}
+                        className="sm:col-span-5 px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-xs"
+                      />
+                      <input
+                        type="text"
+                        required
+                        value={comp.url}
+                        onChange={(e) => {
+                          const next = [...competitorInputs];
+                          next[idx].url = e.target.value;
+                          setCompetitorInputs(next);
+                        }}
+                        placeholder="https://competitor.com"
+                        className="sm:col-span-6 px-3 py-2 rounded-xl border border-[#E9EAF2] bg-[#FAFBFF] text-xs"
+                      />
+                      {competitorInputs.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setCompetitorInputs(competitorInputs.filter((_, i) => i !== idx))
+                          }
+                          className="sm:col-span-1 p-2 text-[#68738A] hover:text-red-600"
+                          aria-label="Remove competitor"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+
+                  <div className="flex flex-wrap items-center gap-3 pt-2">
+                    {competitorInputs.length < 15 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setCompetitorInputs([...competitorInputs, { name: '', url: '' }])
+                        }
+                        className="btn-waou-outline px-4 py-2 text-xs inline-flex items-center gap-1.5"
+                      >
+                        <Plus className="w-3.5 h-3.5" />
+                        <span>Add Competitor ({competitorInputs.length}/15)</span>
+                      </button>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={analyzingCompetitors}
+                      className="btn-waou-gradient px-6 py-2.5 text-xs inline-flex items-center gap-2"
+                    >
+                      {analyzingCompetitors ? (
+                        <>
+                          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          <span>Researching Competitors...</span>
+                        </>
+                      ) : (
+                        <span>Research &amp; Generate Slides</span>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              {/* Generated Solution Slide & USP/Moat Approval */}
+              {strategy.improvedSolutionSlide && (
+                <div className="bg-white rounded-2xl border border-[#E9EAF2] p-6 sm:p-8 space-y-5">
+                  <div>
+                    <h2 className="text-base font-semibold text-[#171A2E]">
+                      Improved Solution Slide
+                    </h2>
+                    <pre className="mt-2 p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] text-xs text-[#171A2E] whitespace-pre-wrap font-sans leading-relaxed">
+                      {strategy.improvedSolutionSlide}
+                    </pre>
+                  </div>
+
+                  {/* Ask whether founder wants to change USP and Moat (Yes / No) */}
+                  <div className="p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] space-y-3">
+                    <div className="text-xs font-semibold text-[#171A2E]">
+                      Do you want to change your USP and Moat based on this competitor analysis?
+                    </div>
+                    <textarea
+                      rows={2}
+                      value={proposedUsp}
+                      onChange={(e) => setProposedUsp(e.target.value)}
+                      className="w-full px-3 py-2 rounded-xl border border-[#E9EAF2] bg-white text-xs text-[#171A2E]"
+                    />
+                    <div className="flex items-center gap-3">
+                      <button
+                        type="button"
+                        onClick={() => handleUspMoatDecision(true)}
+                        className="btn-waou-gradient px-4 py-2 text-xs"
+                      >
+                        Yes — Approve &amp; Apply
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleUspMoatDecision(false)}
+                        className="btn-waou-outline px-4 py-2 text-xs"
+                      >
+                        No — Keep Current
+                      </button>
+                    </div>
+                    {uspSavedMsg && (
+                      <p className="text-xs text-emerald-600 font-medium">{uspSavedMsg}</p>
+                    )}
+                  </div>
+
+                  {/* Generated Slides: Competitor Analysis, TAM/SAM/SOM, Business Model & Unit Economics */}
+                  <div className="space-y-4">
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#5368EA] mb-1.5">
+                        Slide: Competitor Analysis
+                      </h3>
+                      <pre className="p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] text-xs text-[#171A2E] whitespace-pre-wrap font-sans leading-relaxed">
+                        {strategy.generatedSlides.competitorAnalysis}
+                      </pre>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#5368EA] mb-1.5">
+                        Slide: TAM / SAM / SOM
+                      </h3>
+                      <pre className="p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] text-xs text-[#171A2E] whitespace-pre-wrap font-sans leading-relaxed">
+                        {strategy.generatedSlides.tamSamSom}
+                      </pre>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider text-[#5368EA] mb-1.5">
+                        Slide: Business Model &amp; Unit Economics
+                      </h3>
+                      <pre className="p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] text-xs text-[#171A2E] whitespace-pre-wrap font-sans leading-relaxed">
+                        {strategy.generatedSlides.businessModelUnitEconomics}
+                      </pre>
+                    </div>
+
+                    {/* Traction / Retention remains HIDDEN by default */}
+                    <div className="pt-2">
+                      <button
+                        type="button"
+                        onClick={() => setShowTractionHidden((prev) => !prev)}
+                        className="text-xs text-[#68738A] hover:text-[#171A2E] underline"
+                      >
+                        {showTractionHidden
+                          ? 'Hide Traction / Retention'
+                          : 'Traction / Retention (Hidden by default)'}
+                      </button>
+                      {showTractionHidden && (
+                        <div className="mt-2 p-4 rounded-xl bg-[#FAFBFF] border border-[#E9EAF2] text-xs text-[#68738A]">
+                          Traction / Retention slide is hidden by default until explicitly enabled
+                          by the founder.
                         </div>
                       )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </main>

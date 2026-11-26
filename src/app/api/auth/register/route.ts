@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { readDb, writeDb, UserRole, getDefaultDueDiligenceChecklist } from '@/lib/store';
+import { readDb, writeDb, UserRole, getDefaultStrategyState } from '@/lib/store';
 import { hashPassword, signSessionToken, SESSION_COOKIE_NAME } from '@/lib/auth';
+
+const VALID_ROLES: UserRole[] = ['startup', 'investor', 'consultant', 'mentor', 'incubator'];
 
 export async function POST(request: Request) {
   try {
@@ -11,14 +13,20 @@ export async function POST(request: Request) {
       fullName,
       email,
       password,
-      startupName,
-      startupDetails,
+      linkedinProfile,
+      mobileNumber,
+      companyDetails,
+      hasWebsite,
+      websiteUrl,
+      weeklyEmailConsent,
       firmName,
       firmDetails,
       portfolio,
+      organizationName,
+      expertiseDetails,
     } = body;
 
-    if (role !== 'startup' && role !== 'investor') {
+    if (!VALID_ROLES.includes(role)) {
       return NextResponse.json({ error: 'Invalid account role.' }, { status: 400 });
     }
 
@@ -38,16 +46,36 @@ export async function POST(request: Request) {
       );
     }
 
-    if (role === 'startup' && (!startupName || typeof startupName !== 'string' || !startupName.trim())) {
-      return NextResponse.json(
-        { error: 'Please enter your startup or business name.' },
-        { status: 400 }
-      );
+    if (role === 'startup') {
+      if (!linkedinProfile || typeof linkedinProfile !== 'string' || !linkedinProfile.trim()) {
+        return NextResponse.json(
+          { error: 'LinkedIn Profile is required for Startup / MSME registration.' },
+          { status: 400 }
+        );
+      }
+      if (!mobileNumber || typeof mobileNumber !== 'string' || !mobileNumber.trim()) {
+        return NextResponse.json(
+          { error: 'Mobile Number is required for Startup / MSME registration.' },
+          { status: 400 }
+        );
+      }
+      if (!companyDetails || typeof companyDetails !== 'string' || !companyDetails.trim()) {
+        return NextResponse.json(
+          { error: 'Company details are required.' },
+          { status: 400 }
+        );
+      }
+      if (hasWebsite === true && (!websiteUrl || !String(websiteUrl).trim())) {
+        return NextResponse.json(
+          { error: 'Please provide your company website URL.' },
+          { status: 400 }
+        );
+      }
     }
 
     if (role === 'investor' && (!firmName || typeof firmName !== 'string' || !firmName.trim())) {
       return NextResponse.json(
-        { error: 'Please enter your investment firm name.' },
+        { error: 'Please enter your investment firm or lender name.' },
         { status: 400 }
       );
     }
@@ -69,17 +97,30 @@ export async function POST(request: Request) {
       fullName: fullName.trim(),
       email: cleanEmail,
       passwordHash: hashPassword(password),
-      startupName: role === 'startup' ? startupName?.trim() : undefined,
-      startupDetails: role === 'startup' ? (startupDetails || '').trim() : undefined,
-      firmName: role === 'investor' ? firmName?.trim() : undefined,
-      firmDetails: role === 'investor' ? (firmDetails || '').trim() : undefined,
-      portfolio: role === 'investor' ? (portfolio || '').trim() : undefined,
+      linkedinProfile: linkedinProfile ? String(linkedinProfile).trim() : undefined,
+      mobileNumber: mobileNumber ? String(mobileNumber).trim() : undefined,
+      companyDetails: role === 'startup' ? String(companyDetails || '').trim() : undefined,
+      hasWebsite: role === 'startup' ? Boolean(hasWebsite) : undefined,
+      websiteUrl:
+        role === 'startup' && hasWebsite && websiteUrl ? String(websiteUrl).trim() : undefined,
+      weeklyEmailConsent: role === 'startup' ? Boolean(weeklyEmailConsent) : undefined,
+      firmName: role === 'investor' ? String(firmName || '').trim() : undefined,
+      firmDetails: role === 'investor' ? String(firmDetails || '').trim() : undefined,
+      portfolio: role === 'investor' ? String(portfolio || '').trim() : undefined,
+      organizationName:
+        role === 'consultant' || role === 'mentor' || role === 'incubator'
+          ? String(organizationName || '').trim()
+          : undefined,
+      expertiseDetails:
+        role === 'consultant' || role === 'mentor' || role === 'incubator'
+          ? String(expertiseDetails || '').trim()
+          : undefined,
       createdAt: new Date().toISOString(),
     };
 
     db.users.push(newUser);
     if (role === 'startup') {
-      db.dueDiligenceByUser[userId] = getDefaultDueDiligenceChecklist();
+      db.strategyByUser[userId] = getDefaultStrategyState();
     }
     writeDb(db);
 
