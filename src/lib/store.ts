@@ -97,11 +97,20 @@ export interface PartnerMeetingRequest {
   createdAt: string;
 }
 
+export interface WaitlistRecord {
+  id: string;
+  name: string;
+  email: string;
+  accountType: string;
+  createdAt: string;
+}
+
 interface DatabaseSchema {
   users: UserRecord[];
   frsByUser: Record<string, FrsState>;
   strategyByUser: Record<string, StrategyWorkflowState>;
   partnerMeetings: PartnerMeetingRequest[];
+  waitlist: WaitlistRecord[];
 }
 
 const DEFAULT_DB: DatabaseSchema = {
@@ -109,6 +118,7 @@ const DEFAULT_DB: DatabaseSchema = {
   frsByUser: {},
   strategyByUser: {},
   partnerMeetings: [],
+  waitlist: [],
 };
 
 let memoryDb: DatabaseSchema | null = null;
@@ -129,6 +139,7 @@ export function readDb(): DatabaseSchema {
         frsByUser: parsed.frsByUser || {},
         strategyByUser: parsed.strategyByUser || {},
         partnerMeetings: parsed.partnerMeetings || [],
+        waitlist: parsed.waitlist || [],
       };
       return memoryDb;
     }
