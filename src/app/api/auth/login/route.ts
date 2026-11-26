@@ -42,7 +42,7 @@ export async function POST(request: Request) {
       );
     }
 
-    const token = signSessionToken(user.id, user.role);
+    const token = signSessionToken(user.id, user.role, user.fullName, user.email);
     const { passwordHash: _ignored, ...safeUser } = user;
 
     const response = NextResponse.json({ success: true, user: safeUser });

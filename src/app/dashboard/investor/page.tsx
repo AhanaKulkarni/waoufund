@@ -118,8 +118,19 @@ export default function InvestorDashboardPage() {
           </span>
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="hidden sm:inline-block text-xs text-[#68738A]">{user?.fullName}</span>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5368EA] to-[#8069EA] text-white flex items-center justify-center text-xs font-semibold tracking-wide"
+            aria-label="User profile initials"
+          >
+            {(user?.fullName || 'U')
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p[0].toUpperCase())
+              .join('')}
+          </div>
           <button
             onClick={handleLogout}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-[#68738A] hover:text-[#171A2E] px-3 py-1.5 rounded-full border border-[#E9EAF2] hover:bg-[#FAFBFF] transition-colors"

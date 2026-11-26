@@ -171,9 +171,12 @@ export default function StartupDashboardPage() {
 
         if (frsRes.ok) {
           const frsData = await frsRes.json();
-          if (frsData.frs) {
-            setFrs(frsData.frs);
-            const firstIssue = (frsData.frs.areas as FrsArea[]).find((a) => a.status === 'issue');
+          const savedLocal = localStorage.getItem(`waou_frs_${meData.user.id}`);
+          const resolvedFrs: FrsState | null =
+            frsData.frs || (savedLocal ? (JSON.parse(savedLocal) as FrsState) : null);
+          if (resolvedFrs) {
+            setFrs(resolvedFrs);
+            const firstIssue = resolvedFrs.areas.find((a) => a.status === 'issue');
             if (firstIssue) {
               setSelectedIssueId(firstIssue.id);
               setEditableFix(firstIssue.generatedContent);
@@ -205,21 +208,57 @@ export default function StartupDashboardPage() {
     router.refresh();
   };
 
-  // Automatic file upload handler (triggers immediately on file selection)
+  // Automatic file upload handler — extracts PDF text client-side to bypass serverless 4.5MB body limits
   const uploadDeckFile = async (file: File) => {
     setUploadError(null);
     setUploadingDeck(true);
     try {
-      const formData = new FormData();
-      formData.append('deck', file);
+      const arrayBuffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(arrayBuffer);
+      let raw = '';
+      // Decode up to first 4MB of bytes safely for text extraction
+      const limit = Math.min(bytes.length, 4 * 1024 * 1024);
+      for (let i = 0; i < limit; i++) {
+        raw += String.fromCharCode(bytes[i]);
+      }
+
+      const parenStrings: string[] = [];
+      const parenRegex = /\(([^()\\]{2,140})\)/g;
+      let match: RegExpExecArray | null;
+      while ((match = parenRegex.exec(raw)) !== null && parenStrings.length < 1800) {
+        const cleaned = match[1].replace(/[^\x20-\x7E]/g, ' ').trim();
+        if (cleaned.length >= 2 && /[a-zA-Z0-9]{2,}/.test(cleaned)) {
+          parenStrings.push(cleaned);
+        }
+      }
+
+      let extractedText = parenStrings.join(' ');
+      if (extractedText.length < 80) {
+        const asciiRuns = raw.match(/[A-Za-z0-9 ,.%$₹:;\-/]{5,}/g) || [];
+        extractedText = asciiRuns.slice(0, 900).join(' ');
+      }
+
       const res = await fetch('/api/deck/evaluate', {
         method: 'POST',
-        body: formData,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fileName: file.name,
+          extractedText: extractedText.slice(0, 18000),
+        }),
       });
+
+      const contentType = res.headers.get('content-type') || '';
+      if (!contentType.includes('application/json')) {
+        throw new Error(`Upload failed with server status ${res.status}. Please try again.`);
+      }
+
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Upload failed.');
 
       setFrs(data.frs);
+      if (user?.id && data.frs) {
+        localStorage.setItem(`waou_frs_${user.id}`, JSON.stringify(data.frs));
+      }
       if (data.extractedProfile) {
         setUser((prev) =>
           prev
@@ -257,11 +296,18 @@ export default function StartupDashboardPage() {
       const res = await fetch('/api/deck/evaluate', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ areaId: selectedIssueId, approvedContent: editableFix }),
+        body: JSON.stringify({
+          areaId: selectedIssueId,
+          approvedContent: editableFix,
+          fallbackFrs: frs,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.frs) {
         setFrs(data.frs);
+        if (user?.id) {
+          localStorage.setItem(`waou_frs_${user.id}`, JSON.stringify(data.frs));
+        }
         // Automatically advance to the next remaining issue (one by one)
         const nextIssue = (data.frs.areas as FrsArea[]).find((a) => a.status === 'issue');
         if (nextIssue) {
@@ -434,8 +480,19 @@ export default function StartupDashboardPage() {
           )}
         </div>
 
-        <div className="flex items-center gap-4">
-          <span className="hidden sm:inline-block text-xs text-[#68738A]">{user?.fullName}</span>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5368EA] to-[#8069EA] text-white flex items-center justify-center text-xs font-semibold tracking-wide"
+            aria-label="User profile initials"
+          >
+            {(user?.fullName || 'U')
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p[0].toUpperCase())
+              .join('')}
+          </div>
           <button
             onClick={handleLogout}
             className="inline-flex items-center gap-1.5 text-xs font-medium text-[#68738A] hover:text-[#171A2E] px-3 py-1.5 rounded-full border border-[#E9EAF2] hover:bg-[#FAFBFF] transition-colors"

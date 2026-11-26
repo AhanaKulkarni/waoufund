@@ -85,13 +85,27 @@ export default function EnablerDashboardPage() {
           />
         </Link>
 
-        <button
-          onClick={handleLogout}
-          className="inline-flex items-center gap-1.5 text-xs font-medium text-[#68738A] hover:text-[#171A2E] px-3 py-1.5 rounded-full border border-[#E9EAF2]"
-        >
-          <LogOut className="w-3.5 h-3.5" />
-          <span>Logout</span>
-        </button>
+        <div className="flex items-center gap-3">
+          <div
+            className="w-9 h-9 rounded-full bg-gradient-to-br from-[#5368EA] to-[#8069EA] text-white flex items-center justify-center text-xs font-semibold tracking-wide"
+            aria-label="User profile initials"
+          >
+            {(user?.fullName || 'U')
+              .trim()
+              .split(/\s+/)
+              .filter(Boolean)
+              .slice(0, 2)
+              .map((p) => p[0].toUpperCase())
+              .join('')}
+          </div>
+          <button
+            onClick={handleLogout}
+            className="inline-flex items-center gap-1.5 text-xs font-medium text-[#68738A] hover:text-[#171A2E] px-3 py-1.5 rounded-full border border-[#E9EAF2]"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            <span>Logout</span>
+          </button>
+        </div>
       </header>
 
       <main className="max-w-3xl w-full mx-auto px-6 sm:px-8 py-10">

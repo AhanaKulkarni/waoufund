@@ -167,19 +167,35 @@ export async function POST(request: Request) {
   }
 
   try {
-    const formData = await request.formData();
-    const file = formData.get('deck');
+    const contentType = request.headers.get('content-type') || '';
+    let fileName = 'Pitch_Deck.pdf';
+    let text = '';
 
-    if (!file || !(file instanceof File)) {
-      return NextResponse.json({ error: 'Please upload a pitch deck PDF file.' }, { status: 400 });
-    }
-    if (file.size === 0 || file.size > 20 * 1024 * 1024) {
-      return NextResponse.json({ error: 'Pitch deck PDF must be between 1 byte and 20 MB.' }, { status: 400 });
+    if (contentType.includes('application/json')) {
+      const body = await request.json();
+      fileName = String(body.fileName || 'Pitch_Deck.pdf');
+      text = String(body.extractedText || '').slice(0, 18000);
+    } else {
+      const formData = await request.formData();
+      const file = formData.get('deck');
+
+      if (!file || !(file instanceof File)) {
+        return NextResponse.json({ error: 'Please upload a pitch deck PDF file.' }, { status: 400 });
+      }
+      if (file.size === 0 || file.size > 20 * 1024 * 1024) {
+        return NextResponse.json(
+          { error: 'Pitch deck PDF must be between 1 byte and 20 MB.' },
+          { status: 400 }
+        );
+      }
+
+      fileName = file.name;
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const extracted = extractTextFromPdfBuffer(buffer);
+      text = extracted.text;
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const { text } = extractTextFromPdfBuffer(buffer);
-    const extractedCompanyName = extractCompanyName(text, file.name);
+    const extractedCompanyName = extractCompanyName(text, fileName);
     const extractedLogoUrl = buildBrandLogoDataUri(extractedCompanyName);
 
     const hasReadableText = text.trim().length >= 50;
@@ -201,7 +217,7 @@ export async function POST(request: Request) {
     const { overallScore, errorCount } = recalculateFrs(areas);
 
     const frsState: FrsState = {
-      fileName: file.name,
+      fileName,
       extractedCompanyName,
       overallScore,
       errorCount,
@@ -243,10 +259,10 @@ export async function PATCH(request: Request) {
 
   try {
     const body = await request.json();
-    const { areaId, approvedContent } = body;
+    const { areaId, approvedContent, fallbackFrs } = body;
 
     const db = readDb();
-    const frs = db.frsByUser[user.id];
+    const frs = db.frsByUser[user.id] || (fallbackFrs as FrsState | undefined);
     if (!frs) {
       return NextResponse.json({ error: 'No pitch deck evaluation found.' }, { status: 404 });
     }

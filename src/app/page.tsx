@@ -146,64 +146,51 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* RIGHT: BRIGHT GRAPHICS OF THE GOOGLE COLOURS (#4285F4, #EA4335, #FBBC05, #34A853) */}
+            {/* RIGHT: BRIGHT SPECTRUM GRAPHIC (RED, ORANGE, YELLOW, LIGHT GREEN, GREEN, DARK GREEN) */}
             <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
-              <div className="w-full max-w-[440px] aspect-square relative rounded-3xl bg-white/90 border border-[#E9EAF2] shadow-lg shadow-[#171A2E]/5 p-6 flex items-center justify-center overflow-hidden">
+              <div className="w-full max-w-[440px] aspect-square relative rounded-3xl bg-white/95 border border-[#E9EAF2] shadow-lg shadow-[#171A2E]/5 p-6 flex items-center justify-center overflow-hidden">
                 <svg
                   viewBox="0 0 400 400"
                   className="w-full h-full"
                   role="img"
-                  aria-label="Bright Google-colour geometric fundraising intelligence graphic"
+                  aria-label="Bright red, orange, yellow, light green, green, and dark green progression graphic"
                 >
-                  <defs>
-                    <linearGradient id="gBlue" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#4285F4" />
-                      <stop offset="100%" stopColor="#1A73E8" />
-                    </linearGradient>
-                    <linearGradient id="gRed" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#FF5252" />
-                      <stop offset="100%" stopColor="#EA4335" />
-                    </linearGradient>
-                    <linearGradient id="gYellow" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#FFD54F" />
-                      <stop offset="100%" stopColor="#FBBC05" />
-                    </linearGradient>
-                    <linearGradient id="gGreen" x1="0%" y1="0%" x2="100%" y2="100%">
-                      <stop offset="0%" stopColor="#4ADE80" />
-                      <stop offset="100%" stopColor="#34A853" />
-                    </linearGradient>
-                  </defs>
-
                   <g stroke="#E9EAF2" strokeWidth="1">
-                    <line x1="40" y1="100" x2="360" y2="100" />
-                    <line x1="40" y1="200" x2="360" y2="200" />
-                    <line x1="40" y1="300" x2="360" y2="300" />
-                    <line x1="100" y1="40" x2="100" y2="360" />
-                    <line x1="200" y1="40" x2="200" y2="360" />
-                    <line x1="300" y1="40" x2="300" y2="360" />
+                    <line x1="36" y1="90" x2="364" y2="90" />
+                    <line x1="36" y1="180" x2="364" y2="180" />
+                    <line x1="36" y1="270" x2="364" y2="270" />
+                    <line x1="36" y1="340" x2="364" y2="340" />
                   </g>
 
-                  <circle cx="135" cy="135" r="76" fill="url(#gBlue)" opacity="0.92" />
-                  <circle cx="265" cy="130" r="64" fill="url(#gRed)" opacity="0.9" />
-                  <rect x="64" y="218" width="128" height="118" rx="34" fill="url(#gYellow)" opacity="0.94" />
-                  <rect x="212" y="182" width="124" height="154" rx="34" fill="url(#gGreen)" opacity="0.92" />
+                  {/* 6-Stage Ascending Progression: Red -> Orange -> Yellow -> Light Green -> Green -> Dark Green */}
+                  {/* 1. Red */}
+                  <rect x="44" y="250" width="42" height="90" rx="14" fill="#EF4444" />
+                  {/* 2. Orange */}
+                  <rect x="98" y="218" width="42" height="122" rx="14" fill="#F97316" />
+                  {/* 3. Yellow */}
+                  <rect x="152" y="182" width="42" height="158" rx="14" fill="#FACC15" />
+                  {/* 4. Light Green */}
+                  <rect x="206" y="144" width="42" height="196" rx="14" fill="#84CC16" />
+                  {/* 5. Green */}
+                  <rect x="260" y="106" width="42" height="234" rx="14" fill="#22C55E" />
+                  {/* 6. Dark Green */}
+                  <rect x="314" y="64" width="42" height="276" rx="14" fill="#15803D" />
 
+                  {/* Crisp White Growth Trajectory Line & Nodes */}
                   <path
-                    d="M 75 295 C 125 275, 145 215, 200 198 C 250 182, 278 122, 330 92"
+                    d="M 65 232 L 119 200 L 173 164 L 227 126 L 281 88 L 335 46"
                     fill="none"
-                    stroke="#FFFFFF"
-                    strokeWidth="6"
+                    stroke="#171A2E"
+                    strokeWidth="3.5"
                     strokeLinecap="round"
+                    strokeLinejoin="round"
                   />
-                  <circle cx="75" cy="295" r="9" fill="#FFFFFF" stroke="#FBBC05" strokeWidth="4" />
-                  <circle cx="200" cy="198" r="9" fill="#FFFFFF" stroke="#4285F4" strokeWidth="4" />
-                  <circle cx="265" cy="140" r="9" fill="#FFFFFF" stroke="#EA4335" strokeWidth="4" />
-                  <circle cx="330" cy="92" r="11" fill="#FFFFFF" stroke="#34A853" strokeWidth="4" />
-
-                  <rect x="242" y="248" width="66" height="14" rx="7" fill="#FFFFFF" opacity="0.9" />
-                  <rect x="242" y="272" width="46" height="14" rx="7" fill="#FFFFFF" opacity="0.7" />
-                  <rect x="92" y="250" width="72" height="14" rx="7" fill="#FFFFFF" opacity="0.9" />
-                  <rect x="92" y="274" width="48" height="14" rx="7" fill="#FFFFFF" opacity="0.7" />
+                  <circle cx="65" cy="232" r="7" fill="#FFFFFF" stroke="#EF4444" strokeWidth="3.5" />
+                  <circle cx="119" cy="200" r="7" fill="#FFFFFF" stroke="#F97316" strokeWidth="3.5" />
+                  <circle cx="173" cy="164" r="7" fill="#FFFFFF" stroke="#FACC15" strokeWidth="3.5" />
+                  <circle cx="227" cy="126" r="7" fill="#FFFFFF" stroke="#84CC16" strokeWidth="3.5" />
+                  <circle cx="281" cy="88" r="7" fill="#FFFFFF" stroke="#22C55E" strokeWidth="3.5" />
+                  <circle cx="335" cy="46" r="8" fill="#FFFFFF" stroke="#15803D" strokeWidth="3.5" />
                 </svg>
               </div>
             </div>

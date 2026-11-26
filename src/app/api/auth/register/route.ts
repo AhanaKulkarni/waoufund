@@ -124,7 +124,7 @@ export async function POST(request: Request) {
     }
     writeDb(db);
 
-    const token = signSessionToken(userId, role);
+    const token = signSessionToken(userId, role, newUser.fullName, newUser.email);
     const { passwordHash: _ignored, ...safeUser } = newUser;
 
     const response = NextResponse.json({ success: true, user: safeUser }, { status: 201 });

@@ -124,6 +124,9 @@ const DEFAULT_DB: DatabaseSchema = {
 let memoryDb: DatabaseSchema | null = null;
 
 function getDbPath(): string {
+  if (process.env.VERCEL === '1' || process.env.AWS_LAMBDA_FUNCTION_NAME) {
+    return path.join('/tmp', 'waou_db.json');
+  }
   return path.join(process.cwd(), '.data', 'waou_db.json');
 }
 
