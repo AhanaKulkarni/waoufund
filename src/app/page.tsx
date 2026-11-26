@@ -146,52 +146,114 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* RIGHT: BRIGHT SPECTRUM GRAPHIC (RED, ORANGE, YELLOW, LIGHT GREEN, GREEN, DARK GREEN) */}
+            {/* RIGHT: PREMIUM SEGMENTED FUNDABILITY GAUGE GRAPHIC */}
             <div className="lg:col-span-5 flex items-center justify-center lg:justify-end">
-              <div className="w-full max-w-[440px] aspect-square relative rounded-3xl bg-white/95 border border-[#E9EAF2] shadow-lg shadow-[#171A2E]/5 p-6 flex items-center justify-center overflow-hidden">
+              <div className="w-full max-w-[440px] aspect-square relative rounded-3xl bg-white/95 border border-[#E9EAF2] shadow-lg shadow-[#171A2E]/5 p-6 flex flex-col items-center justify-center overflow-hidden">
                 <svg
-                  viewBox="0 0 400 400"
-                  className="w-full h-full"
+                  viewBox="0 0 400 360"
+                  className="w-full h-auto"
                   role="img"
-                  aria-label="Bright red, orange, yellow, light green, green, and dark green progression graphic"
+                  aria-label="Fundability Readiness Score segmented gauge"
                 >
-                  <g stroke="#E9EAF2" strokeWidth="1">
-                    <line x1="36" y1="90" x2="364" y2="90" />
-                    <line x1="36" y1="180" x2="364" y2="180" />
-                    <line x1="36" y1="270" x2="364" y2="270" />
-                    <line x1="36" y1="340" x2="364" y2="340" />
-                  </g>
+                  <defs>
+                    <filter id="needleShadow" x="-20%" y="-20%" width="140%" height="140%">
+                      <feDropShadow dx="0" dy="3" stdDeviation="4" floodColor="#171A2E" floodOpacity="0.18" />
+                    </filter>
+                    <linearGradient id="seg0" x1="0%" y1="100%" x2="0%" y2="0%">
+                      <stop offset="0%" stopColor="#DC2626" />
+                      <stop offset="100%" stopColor="#EF4444" />
+                    </linearGradient>
+                    <linearGradient id="seg1" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#EA580C" />
+                      <stop offset="100%" stopColor="#F97316" />
+                    </linearGradient>
+                    <linearGradient id="seg2" x1="0%" y1="100%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#F59E0B" />
+                      <stop offset="100%" stopColor="#FBBF24" />
+                    </linearGradient>
+                    <linearGradient id="seg3" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#FACC15" />
+                      <stop offset="100%" stopColor="#FDE047" />
+                    </linearGradient>
+                    <linearGradient id="seg4" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="#BEF264" />
+                      <stop offset="100%" stopColor="#84CC16" />
+                    </linearGradient>
+                    <linearGradient id="seg5" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#4ADE80" />
+                      <stop offset="100%" stopColor="#22C55E" />
+                    </linearGradient>
+                    <linearGradient id="seg6" x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor="#16A34A" />
+                      <stop offset="100%" stopColor="#15803D" />
+                    </linearGradient>
+                    <linearGradient id="seg7" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#0D9488" />
+                      <stop offset="100%" stopColor="#115E59" />
+                    </linearGradient>
+                  </defs>
 
-                  {/* 6-Stage Ascending Progression: Red -> Orange -> Yellow -> Light Green -> Green -> Dark Green */}
-                  {/* 1. Red */}
-                  <rect x="44" y="250" width="42" height="90" rx="14" fill="#EF4444" />
-                  {/* 2. Orange */}
-                  <rect x="98" y="218" width="42" height="122" rx="14" fill="#F97316" />
-                  {/* 3. Yellow */}
-                  <rect x="152" y="182" width="42" height="158" rx="14" fill="#FACC15" />
-                  {/* 4. Light Green */}
-                  <rect x="206" y="144" width="42" height="196" rx="14" fill="#84CC16" />
-                  {/* 5. Green */}
-                  <rect x="260" y="106" width="42" height="234" rx="14" fill="#22C55E" />
-                  {/* 6. Dark Green */}
-                  <rect x="314" y="64" width="42" height="276" rx="14" fill="#15803D" />
-
-                  {/* Crisp White Growth Trajectory Line & Nodes */}
-                  <path
-                    d="M 65 232 L 119 200 L 173 164 L 227 126 L 281 88 L 335 46"
+                  {/* Subtle outer guide ring */}
+                  <circle
+                    cx="200"
+                    cy="205"
+                    r="160"
                     fill="none"
-                    stroke="#171A2E"
-                    strokeWidth="3.5"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
+                    stroke="#F1F4FA"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 6"
                   />
-                  <circle cx="65" cy="232" r="7" fill="#FFFFFF" stroke="#EF4444" strokeWidth="3.5" />
-                  <circle cx="119" cy="200" r="7" fill="#FFFFFF" stroke="#F97316" strokeWidth="3.5" />
-                  <circle cx="173" cy="164" r="7" fill="#FFFFFF" stroke="#FACC15" strokeWidth="3.5" />
-                  <circle cx="227" cy="126" r="7" fill="#FFFFFF" stroke="#84CC16" strokeWidth="3.5" />
-                  <circle cx="281" cy="88" r="7" fill="#FFFFFF" stroke="#22C55E" strokeWidth="3.5" />
-                  <circle cx="335" cy="46" r="8" fill="#FFFFFF" stroke="#15803D" strokeWidth="3.5" />
+
+                  {/* 8 Precision Segmented Gauge Arcs (151.5° to 388.5°, R=146, r=90) */}
+                  {[
+                    { a1: 151.5, a2: 178.5, fill: 'url(#seg0)' },
+                    { a1: 181.5, a2: 208.5, fill: 'url(#seg1)' },
+                    { a1: 211.5, a2: 238.5, fill: 'url(#seg2)' },
+                    { a1: 241.5, a2: 268.5, fill: 'url(#seg3)' },
+                    { a1: 271.5, a2: 298.5, fill: 'url(#seg4)' },
+                    { a1: 301.5, a2: 328.5, fill: 'url(#seg5)' },
+                    { a1: 331.5, a2: 358.5, fill: 'url(#seg6)' },
+                    { a1: 361.5, a2: 388.5, fill: 'url(#seg7)' },
+                  ].map((seg, i) => {
+                    const rad = (deg: number) => (deg * Math.PI) / 180;
+                    const cx = 200;
+                    const cy = 205;
+                    const R = 146;
+                    const r = 90;
+                    const x1 = cx + R * Math.cos(rad(seg.a1));
+                    const y1 = cy + R * Math.sin(rad(seg.a1));
+                    const x2 = cx + R * Math.cos(rad(seg.a2));
+                    const y2 = cy + R * Math.sin(rad(seg.a2));
+                    const x3 = cx + r * Math.cos(rad(seg.a2));
+                    const y3 = cy + r * Math.sin(rad(seg.a2));
+                    const x4 = cx + r * Math.cos(rad(seg.a1));
+                    const y4 = cy + r * Math.sin(rad(seg.a1));
+                    const d = `M ${x1.toFixed(2)} ${y1.toFixed(2)} A ${R} ${R} 0 0 1 ${x2.toFixed(2)} ${y2.toFixed(2)} L ${x3.toFixed(2)} ${y3.toFixed(2)} A ${r} ${r} 0 0 0 ${x4.toFixed(2)} ${y4.toFixed(2)} Z`;
+                    return <path key={i} d={d} fill={seg.fill} />;
+                  })}
+
+                  {/* Inner subtle dial arc */}
+                  <path
+                    d="M 131 245 A 80 80 0 1 1 269 245"
+                    fill="none"
+                    stroke="#E9EAF2"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+
+                  {/* Sleek Tapered Needle pointing toward High Readiness (Green zone) */}
+                  <g transform="translate(200, 205) rotate(10)" filter="url(#needleShadow)">
+                    <polygon points="-6,-7 104,0 -6,7" fill="#171A2E" />
+                    <circle cx="0" cy="0" r="15" fill="#171A2E" />
+                    <circle cx="0" cy="0" r="7" fill="#FFFFFF" />
+                  </g>
                 </svg>
+
+                <div className="text-center -mt-3">
+                  <div className="text-xs font-semibold uppercase tracking-widest text-[#68738A]">
+                    Fundability Readiness
+                  </div>
+                </div>
               </div>
             </div>
           </div>
