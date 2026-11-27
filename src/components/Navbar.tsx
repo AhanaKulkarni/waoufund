@@ -21,15 +21,15 @@ export default function Navbar() {
 
   return (
     <header ref={navRef} className="w-full bg-transparent relative z-50">
-      <div className="w-full pl-3 pr-4 sm:pl-6 sm:pr-8 py-3 flex items-center justify-between gap-4">
+      <div className="w-full px-6 sm:px-10 lg:px-14 py-4 flex items-center justify-between gap-4">
         {/* LEFT: WaoU Fund logo + small text directly below */}
         <Link href="/" className="flex flex-col items-start flex-shrink-0">
           <Image
             src="/waou-logo.png"
             alt="WaoU Fund"
-            width={150}
-            height={48}
-            className="h-9 sm:h-10 w-auto object-contain"
+            width={160}
+            height={50}
+            className="h-9 sm:h-11 w-auto object-contain"
             priority
           />
           <span className="text-[11px] font-medium text-[#68738A] leading-tight mt-0.5 pl-0.5">
@@ -37,9 +37,9 @@ export default function Navbar() {
           </span>
         </Link>
 
-        {/* CENTRE TOP: Clearly visible and larger than the small text below the logo */}
+        {/* CENTRE TOP: Significantly larger, clearly visible */}
         <div className="hidden md:block text-center">
-          <span className="text-base lg:text-lg font-semibold text-[#171A2E] tracking-tight">
+          <span className="text-xl lg:text-[1.75rem] font-bold text-[#171A2E] tracking-tight">
             AI Powered Fundraising Platform
           </span>
         </div>

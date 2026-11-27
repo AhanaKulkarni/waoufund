@@ -70,35 +70,35 @@ export default function HomePage() {
       <Navbar />
 
       {/* 2. MAIN HERO + WAITLIST (FITS WITHIN ONE DESKTOP SCREEN) */}
-      <main className="max-w-6xl w-full mx-auto px-6 sm:px-8 flex-1 flex flex-col justify-center gap-6 lg:gap-8 relative z-10 py-4 lg:py-2">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+      <main className="max-w-7xl w-full mx-auto px-6 sm:px-10 lg:px-14 flex-1 flex flex-col justify-evenly gap-6 lg:gap-8 relative z-10 py-4 lg:py-2">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
           {/* LEFT SIDE */}
-          <div className="lg:col-span-7 text-left space-y-4">
-            <h1 className="text-3xl sm:text-4xl lg:text-[2.85rem] font-semibold text-[#171A2E] tracking-[-0.03em] leading-[1.12]">
+          <div className="lg:col-span-7 text-left space-y-5">
+            <h1 className="text-4xl sm:text-5xl lg:text-[3.4rem] xl:text-[3.85rem] font-bold text-[#171A2E] tracking-[-0.03em] leading-[1.08]">
               Raise Faster, Meet The Right Investors.
             </h1>
 
-            <p className="text-base sm:text-lg font-medium text-[#68738A]">
+            <p className="text-lg sm:text-xl font-medium text-[#68738A]">
               Get Started for Free
             </p>
 
             {/* EXACTLY THREE SEPARATE BUTTONS IN ORDER */}
-            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 pt-1">
+            <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3.5 pt-2">
               <Link
                 href="/auth/startup/register"
-                className="btn-waou-gradient px-5 py-3 text-xs sm:text-sm text-center"
+                className="btn-waou-gradient px-6 py-3.5 text-sm font-medium text-center"
               >
                 Register as Startup/MSME
               </Link>
               <Link
                 href="/auth/investor/register"
-                className="btn-waou-outline px-5 py-3 text-xs sm:text-sm text-center shadow-xs"
+                className="btn-waou-outline px-6 py-3.5 text-sm font-medium text-center shadow-xs"
               >
                 Register as Investor/Lender
               </Link>
               <Link
                 href="/auth/enabler/register"
-                className="btn-waou-outline px-5 py-3 text-xs sm:text-sm text-center shadow-xs"
+                className="btn-waou-outline px-6 py-3.5 text-sm font-medium text-center shadow-xs"
               >
                 Register as Ecosystem Enablers
               </Link>
@@ -106,8 +106,8 @@ export default function HomePage() {
           </div>
 
           {/* RIGHT SIDE — FUNDABILITY READINESS SCORE (6 SEGMENTS + METER BELOW + LABEL) */}
-          <div className="lg:col-span-5 flex flex-col items-center justify-center">
-            <div className="w-full max-w-[330px] bg-white/95 border border-[#E9EAF2] rounded-3xl px-6 py-5 shadow-sm flex flex-col items-center">
+          <div className="lg:col-span-5 flex flex-col items-center lg:items-end justify-center">
+            <div className="w-full max-w-[380px] xl:max-w-[410px] bg-white/95 border border-[#E9EAF2] rounded-3xl px-7 py-6 shadow-sm flex flex-col items-center">
               {/* Six Colour Segments Visual */}
               <svg
                 viewBox="0 0 360 225"
@@ -142,8 +142,8 @@ export default function HomePage() {
               </svg>
 
               {/* Meter below the colour visual */}
-              <div className="w-full mt-1 mb-2.5">
-                <div className="h-2 w-full rounded-full overflow-hidden flex bg-[#F1F4FA]">
+              <div className="w-full mt-2 mb-3">
+                <div className="h-2.5 w-full rounded-full overflow-hidden flex bg-[#F1F4FA]">
                   <div className="flex-1 bg-[#EF4444]" />
                   <div className="flex-1 bg-[#F97316]" />
                   <div className="flex-1 bg-[#FACC15]" />
@@ -153,7 +153,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="text-xs font-semibold text-[#171A2E] tracking-tight text-center">
+              <div className="text-sm font-semibold text-[#171A2E] tracking-tight text-center">
                 Fundability Readiness Score (FRS)
               </div>
             </div>
@@ -161,7 +161,7 @@ export default function HomePage() {
         </div>
 
         {/* 4. COMPACT WAITLIST SECTION */}
-        <section className="bg-white/95 border border-[#E9EAF2] rounded-2xl px-5 py-4 shadow-xs">
+        <section className="bg-white/95 border border-[#E9EAF2] rounded-2xl px-6 py-4 shadow-xs">
           <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
             <h2 className="text-sm font-semibold text-[#171A2E] whitespace-nowrap">
               Join the waitlist
@@ -226,7 +226,7 @@ export default function HomePage() {
 
       {/* 5. COMPACT FOOTER */}
       <footer className="border-t border-[#E9EAF2]/80 bg-white/80 py-3 relative z-10">
-        <div className="max-w-6xl mx-auto px-6 sm:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#68738A]">
+        <div className="max-w-7xl mx-auto px-6 sm:px-10 lg:px-14 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-[#68738A]">
           <span>&copy; {new Date().getFullYear()} WaoU Fund. All rights reserved.</span>
           <a
             href="mailto:support@waoufund.com"
